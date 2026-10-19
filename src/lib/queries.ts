@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
 import type {
   HolidayInput,
-  PeriodsInput,
   SettingsPatch,
   SlotInput,
   SlotPatch,
@@ -14,14 +13,13 @@ import type {
   TermInput,
   WakeTimesInput,
 } from '../../shared/schemas'
-import type { CalendarEvent, CalendarResponse, Holiday, Homework, LessonSlot, Period, Settings, Subject, Tag, Term } from '../../shared/types'
+import type { CalendarEvent, CalendarResponse, Holiday, Homework, LessonSlot, Settings, Subject, Tag, Term } from '../../shared/types'
 import { api } from './api'
 
 export const keys = {
   subjects: ['subjects'] as const,
   terms: ['terms'] as const,
   holidays: ['holidays'] as const,
-  periods: ['periods'] as const,
   slots: ['slots'] as const,
   settings: ['settings'] as const,
   calendar: ['calendar'] as const,
@@ -35,7 +33,6 @@ const json = (body: unknown) => ({ body: JSON.stringify(body) })
 export const useSubjects = () => useQuery({ queryKey: keys.subjects, queryFn: () => api<Subject[]>('/subjects') })
 export const useTerms = () => useQuery({ queryKey: keys.terms, queryFn: () => api<Term[]>('/terms') })
 export const useHolidays = () => useQuery({ queryKey: keys.holidays, queryFn: () => api<Holiday[]>('/holidays') })
-export const usePeriods = () => useQuery({ queryKey: keys.periods, queryFn: () => api<Period[]>('/periods') })
 export const useSlots = () => useQuery({ queryKey: keys.slots, queryFn: () => api<LessonSlot[]>('/slots') })
 export const useTags = () => useQuery({ queryKey: keys.tags, queryFn: () => api<Tag[]>('/tags') })
 export const useSettings = () => useQuery({ queryKey: keys.settings, queryFn: () => api<Settings>('/settings') })
@@ -82,9 +79,6 @@ export const useSaveHoliday = () =>
   )
 export const useDeleteHoliday = () =>
   useApiMutation((id: string) => api<void>(`/holidays/${id}`, { method: 'DELETE' }), [keys.holidays])
-
-export const useSavePeriods = () =>
-  useApiMutation((v: PeriodsInput) => api<Period[]>('/periods', { method: 'PUT', ...json(v) }), [keys.periods])
 
 export const useCreateSlot = () =>
   useApiMutation((v: SlotInput) => api<LessonSlot>('/slots', { method: 'POST', ...json(v) }), [keys.slots])
@@ -170,3 +164,4 @@ export const useImportIcs = () =>
     (text: string) => api<ImportSummary>('/import', { method: 'POST', body: text, headers: { 'content-type': 'text/calendar' } }),
     [keys.events],
   )
+

@@ -1,24 +1,30 @@
-import { Fragment, useMemo, useState, type CSSProperties } from 'react'
-import { toMinutes } from '../../../shared/dates'
-import type { LessonSlot, Period, Subject, Term } from '../../../shared/types'
+import { useMemo, useState, type CSSProperties, type MouseEvent } from 'react'
+import { fromMinutes, toMinutes } from '../../../shared/dates'
+import type { LessonSlot, Subject, Term } from '../../../shared/types'
 import { Block } from '../../components/Block'
 import { Icon } from '../../components/Icon'
 import { WEEKDAYS, dateRange, todayIso } from '../../lib/format'
-import { usePeriods, useSettings, useSlots, useSubjects, useTerms } from '../../lib/queries'
+import { useSettings, useSlots, useSubjects, useTerms } from '../../lib/queries'
 import { DateRangePopover } from '../terms/DateRangePopover'
-import { LessonPopover, type LessonDraft } from './LessonPopover'
-import { PeriodsPopover } from './PeriodsPopover'
+import { layoutColumns, type GridItem } from '../week/layout'
+import { LessonPopover } from './LessonPopover'
 import { SubjectPopover } from './SubjectPopover'
 import styles from './TimetablePage.module.css'
 
 type Open =
   | { kind: 'subject'; anchor: HTMLElement; subject?: Subject }
-  | { kind: 'lesson'; anchor: HTMLElement; draft: LessonDraft }
-  | { kind: 'periods'; anchor: HTMLElement }
   | { kind: 'term'; anchor: HTMLElement; term?: Term }
+  | { kind: 'lesson'; anchor: HTMLElement; slot: LessonSlot }
+  /** new lesson: the popover anchors to the placeholder drawn in the grid */
+  | { kind: 'new'; weekday: number; start: number }
 
-/** Breaks of at least this many minutes get their own row (e.g. lunch). */
-const BREAK_ROW_MIN = 30
+/** Tall enough that a 40-minute lesson still shows subject + time. */
+const PX_PER_MIN = 1.25
+const DEFAULT_START = 7 * 60
+const DEFAULT_END = 17 * 60
+const NEW_LESSON_MIN = 45
+/** Clicks in the grid snap to this many minutes. */
+const CLICK_SNAP = 5
 
 function defaultTerm(terms: Term[]) {
   const today = todayIso()
@@ -29,56 +35,66 @@ function defaultTerm(terms: Term[]) {
   )
 }
 
-/** Which periods a slot covers: first period ending after its start … last period starting before its end. */
-function periodSpan(slot: LessonSlot, periods: Period[]) {
-  const start = toMinutes(slot.startTime)
-  const end = toMinutes(slot.endTime)
-  const first = periods.find((p) => toMinutes(p.endTime) > start)
-  const last = periods.findLast((p) => toMinutes(p.startTime) < end)
-  return first && last && first.number <= last.number ? { from: first.number, to: last.number } : null
-}
-
 export function TimetablePage() {
   const subjects = useSubjects()
   const terms = useTerms()
-  const periods = usePeriods()
   const slots = useSlots()
   const settings = useSettings()
   const [pickedTermId, setPickedTermId] = useState<string | null>(null)
   const [open, setOpen] = useState<Open | null>(null)
+  const [ghostEl, setGhostEl] = useState<HTMLElement | null>(null)
   const close = () => setOpen(null)
 
   const term = terms.data?.find((t) => t.id === pickedTermId) ?? defaultTerm(terms.data ?? [])
   const dayCount = settings.data?.showWeekends ? 7 : 5
   const subjectById = useMemo(() => new Map((subjects.data ?? []).map((s) => [s.id, s])), [subjects.data])
-  const termSlots = (slots.data ?? []).filter((s) => s.termId === term?.id)
+  const termSlots = useMemo(() => (slots.data ?? []).filter((s) => s.termId === term?.id), [slots.data, term?.id])
 
-  // Grid rows: one per period, plus a "Break" row for long gaps.
-  const rows = useMemo(() => {
-    const out: ({ kind: 'period'; period: Period } | { kind: 'break' })[] = []
-    const ps = periods.data ?? []
-    ps.forEach((p, i) => {
-      if (i > 0 && toMinutes(p.startTime) - toMinutes(ps[i - 1].endTime) >= BREAK_ROW_MIN) out.push({ kind: 'break' })
-      out.push({ kind: 'period', period: p })
-    })
-    return out
-  }, [periods.data])
-  const gridRowOf = (periodNumber: number) =>
-    rows.findIndex((r) => r.kind === 'period' && r.period.number === periodNumber) + 2
+  // Lessons per weekday, laid out side by side where they overlap.
+  const itemsByDay = useMemo(() => {
+    const map = new Map<number, (GridItem & { slot: LessonSlot })[]>()
+    for (let d = 1; d <= dayCount; d++) {
+      const items = termSlots
+        .filter((s) => s.weekday === d)
+        .map((s) => {
+          const subject = subjectById.get(s.subjectId)
+          return {
+            key: s.id,
+            date: String(d),
+            start: toMinutes(s.startTime),
+            end: toMinutes(s.endTime),
+            variant: 'lesson' as const,
+            color: subject?.color ?? null,
+            title: subject?.name ?? 'Lesson',
+            meta: `${s.startTime}–${s.endTime}${s.room ? ` · ${s.room}` : ''}`,
+            tags: [],
+            col: 0,
+            cols: 1,
+            slot: s,
+          }
+        })
+      map.set(d, layoutColumns(items) as (GridItem & { slot: LessonSlot })[])
+    }
+    return map
+  }, [termSlots, subjectById, dayCount])
 
-  if (!subjects.data || !terms.data || !periods.data || !slots.data) return null
+  if (!subjects.data || !terms.data || !slots.data) return null
 
+  // Visible hours: whole hours around the earliest and latest lesson.
+  const starts = termSlots.map((s) => toMinutes(s.startTime))
+  const ends = termSlots.map((s) => toMinutes(s.endTime))
+  const start = Math.floor(Math.min(DEFAULT_START, ...starts) / 60) * 60
+  const end = Math.ceil(Math.max(DEFAULT_END, ...ends) / 60) * 60
+  const y = (m: number) => (m - start) * PX_PER_MIN
+  const hours = Array.from({ length: (end - start) / 60 + 1 }, (_, i) => start + i * 60)
   const lessonsPerSubject = (id: string) => termSlots.filter((s) => s.subjectId === id).length
-  const selectedSlotId = open?.kind === 'lesson' ? open.draft.slot?.id : undefined
-  const occupied = new Set<string>()
-  for (const slot of termSlots) {
-    const span = periodSpan(slot, periods.data)
-    if (span) for (let p = span.from; p <= span.to; p++) occupied.add(`${slot.weekday}|${p}`)
-  }
 
-  function openLesson(anchor: HTMLElement, draft: LessonDraft) {
-    if (!subjects.data?.length) setOpen({ kind: 'subject', anchor })
-    else setOpen({ kind: 'lesson', anchor, draft })
+  function addAt(e: MouseEvent<HTMLDivElement>, weekday: number) {
+    if (e.target !== e.currentTarget) return
+    if (!subjects.data?.length) return setOpen({ kind: 'subject', anchor: e.currentTarget })
+    const top = e.currentTarget.getBoundingClientRect().top
+    const minutes = Math.round((start + (e.clientY - top) / PX_PER_MIN) / CLICK_SNAP) * CLICK_SNAP
+    setOpen({ kind: 'new', weekday, start: Math.min(minutes, 23 * 60 - NEW_LESSON_MIN) })
   }
 
   return (
@@ -87,16 +103,11 @@ export function TimetablePage() {
         <div className="titles">
           <h1 className="t-title">Timetable</h1>
           <p className="t-caption c-tertiary">
-            Your weekly template · repeats every week of the term, skipping holidays
+            Your weekly template · repeats every week of the term, skipping holidays · click an empty spot to add a lesson
           </p>
         </div>
         {terms.data.length > 0 && term && (
-          <select
-            className={`input ${styles.termSelect}`}
-            value={term.id}
-            onChange={(e) => setPickedTermId(e.target.value)}
-            aria-label="Term"
-          >
+          <select className={`input ${styles.termSelect}`} value={term.id} onChange={(e) => setPickedTermId(e.target.value)} aria-label="Term">
             {terms.data.map((t) => (
               <option key={t.id} value={t.id}>
                 {t.name} · {dateRange(t.startDate, t.endDate)}
@@ -145,112 +156,106 @@ export function TimetablePage() {
                   <span className="t-mono-small c-tertiary">{lessonsPerSubject(s.id)}×</span>
                 </button>
               ))}
-              <button
-                type="button"
-                className={`card-row ${styles.subjectRow} ${styles.addRow}`}
-                onClick={(e) => setOpen({ kind: 'subject', anchor: e.currentTarget })}
-              >
+              <button type="button" className={`card-row ${styles.subjectRow} ${styles.addRow}`} onClick={(e) => setOpen({ kind: 'subject', anchor: e.currentTarget })}>
                 <Icon name="plus" size={14} />
                 <span className="c-secondary">{subjects.data.length ? 'Add subject' : 'Add your first subject'}</span>
               </button>
             </div>
-            <button type="button" className={`btn btn-ghost ${styles.periodsBtn}`} onClick={(e) => setOpen({ kind: 'periods', anchor: e.currentTarget })}>
-              Edit period times
-            </button>
           </aside>
 
           <div className={styles.gridScroll}>
-          <div
-            className={`card ${styles.grid}`}
-            style={{ '--days': dayCount, gridTemplateRows: `38px ${rows.map((r) => (r.kind === 'break' ? '26px' : '50px')).join(' ')}` } as CSSProperties}
-          >
-            <div className={`t-label c-tertiary ${styles.corner}`}>Period</div>
-            {WEEKDAYS.slice(0, dayCount).map((d) => (
-              <div key={d} className={`t-label c-tertiary ${styles.dayHead}`}>
-                {d}
-              </div>
-            ))}
-
-            {rows.map((row, i) =>
-              row.kind === 'break' ? (
-                <div key={`b${i}`} className={`t-caption c-tertiary ${styles.breakRow}`} style={{ gridRow: i + 2 }}>
-                  Break
-                </div>
-              ) : (
-                <Fragment key={row.period.number}>
-                  <div className={styles.periodCell} style={{ gridRow: i + 2 }}>
-                    <span className="t-body-strong">{row.period.number}</span>
-                    <span className={`t-mono-small c-tertiary ${styles.periodTimes}`}>
-                      <span>{row.period.startTime}</span>
-                      <span>{row.period.endTime}</span>
-                    </span>
+            <div className={`card ${styles.grid}`} style={{ '--days': dayCount } as CSSProperties}>
+              <div className={styles.headRow}>
+                <div className={`t-label c-tertiary ${styles.corner}`}>Time</div>
+                {WEEKDAYS.slice(0, dayCount).map((d) => (
+                  <div key={d} className={`t-label c-tertiary ${styles.dayHead}`}>
+                    {d}
                   </div>
-                  {Array.from({ length: dayCount }, (_, d) =>
-                    occupied.has(`${d + 1}|${row.period.number}`) ? null : (
-                      <button
-                        key={d}
-                        type="button"
-                        className={styles.emptyCell}
-                        style={{ gridRow: i + 2, gridColumn: d + 2 }}
-                        aria-label={`Add lesson ${WEEKDAYS[d]} period ${row.period.number}`}
-                        onClick={(e) =>
-                          openLesson(e.currentTarget, { weekday: d + 1, fromPeriod: row.period.number, toPeriod: row.period.number })
-                        }
-                      >
-                        <Icon name="plus" size={14} />
-                        <span className="t-caption">Add lesson</span>
-                      </button>
-                    ),
-                  )}
-                </Fragment>
-              ),
-            )}
+                ))}
+              </div>
 
-            {termSlots.map((slot) => {
-              const span = periodSpan(slot, periods.data)
-              const subject = subjectById.get(slot.subjectId)
-              if (!span || !subject || slot.weekday > dayCount) return null
-              return (
-                <Block
-                  key={slot.id}
-                  variant="lesson"
-                  color={subject.color}
-                  title={subject.name}
-                  meta={slot.room ?? undefined}
-                  selected={slot.id === selectedSlotId}
-                  style={{ gridColumn: slot.weekday + 1, gridRow: `${gridRowOf(span.from)} / ${gridRowOf(span.to) + 1}`, margin: 3 }}
-                  onClick={(e) =>
-                    setOpen({ kind: 'lesson', anchor: e.currentTarget, draft: { slot, weekday: slot.weekday, fromPeriod: span.from, toPeriod: span.to } })
-                  }
-                />
-              )
-            })}
-          </div>
+              <div className={styles.body} style={{ height: y(end) + 8 }}>
+                {hours.map((h) => (
+                  <div key={h} className={styles.hourLine} style={{ top: y(h) }}>
+                    {h > start && <span className="t-mono-small c-tertiary">{fromMinutes(h)}</span>}
+                  </div>
+                ))}
+                <div className={styles.dayColumns}>
+                  {Array.from({ length: dayCount }, (_, i) => i + 1).map((weekday) => (
+                    <div
+                      key={weekday}
+                      className={styles.dayColumn}
+                      onClick={(e) => addAt(e, weekday)}
+                      title="Click to add a lesson here"
+                    >
+                      {(itemsByDay.get(weekday) ?? []).map((item) => (
+                        <Block
+                          key={item.key}
+                          variant="lesson"
+                          color={item.color}
+                          title={item.title}
+                          meta={item.meta}
+                          selected={open?.kind === 'lesson' && open.slot.id === item.slot.id}
+                          onClick={(e) => setOpen({ kind: 'lesson', anchor: e.currentTarget, slot: item.slot })}
+                          style={{
+                            position: 'absolute',
+                            top: y(item.start) + 1,
+                            height: Math.max(y(item.end) - y(item.start) - 2, 22),
+                            left: `calc(${(item.col / item.cols) * 100}% + 3px)`,
+                            width: `calc(${100 / item.cols}% - 6px)`,
+                          }}
+                        />
+                      ))}
+                      {open?.kind === 'new' && open.weekday === weekday && (
+                        <div
+                          ref={setGhostEl}
+                          className={styles.ghost}
+                          style={{ top: y(open.start) + 1, height: NEW_LESSON_MIN * PX_PER_MIN - 2 }}
+                        >
+                          <span className="t-body-strong">New lesson</span>
+                          <span className="t-mono-small c-secondary">
+                            {fromMinutes(open.start)}–{fromMinutes(open.start + NEW_LESSON_MIN)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
       {open?.kind === 'subject' && (
-        <SubjectPopover
-          anchor={open.anchor}
-          subject={open.subject}
-          usedColors={(subjects.data ?? []).map((s) => s.color)}
-          onClose={close}
-        />
+        <SubjectPopover anchor={open.anchor} subject={open.subject} usedColors={subjects.data.map((s) => s.color)} onClose={close} />
       )}
+      {open?.kind === 'term' && <DateRangePopover kind="term" anchor={open.anchor} item={open.term} onClose={close} />}
       {open?.kind === 'lesson' && term && (
         <LessonPopover
           anchor={open.anchor}
-          draft={open.draft}
+          slot={open.slot}
+          weekday={open.slot.weekday}
+          startTime={open.slot.startTime}
+          endTime={open.slot.endTime}
           termId={term.id}
           termName={term.name}
-          subjects={subjects.data ?? []}
-          periods={periods.data ?? []}
+          subjects={subjects.data}
           onClose={close}
         />
       )}
-      {open?.kind === 'periods' && <PeriodsPopover anchor={open.anchor} periods={periods.data ?? []} onClose={close} />}
-      {open?.kind === 'term' && <DateRangePopover kind="term" anchor={open.anchor} item={open.term} onClose={close} />}
+      {open?.kind === 'new' && term && ghostEl && (
+        <LessonPopover
+          anchor={ghostEl}
+          weekday={open.weekday}
+          startTime={fromMinutes(open.start)}
+          endTime={fromMinutes(open.start + NEW_LESSON_MIN)}
+          termId={term.id}
+          termName={term.name}
+          subjects={subjects.data}
+          onClose={close}
+        />
+      )}
     </div>
   )
 }

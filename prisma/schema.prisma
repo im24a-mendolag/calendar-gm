@@ -36,7 +36,6 @@ model User {
   homework          Homework[]
   wakeTimes         WakeTime[]
   wakeTimeOverrides WakeTimeOverride[]
-  periods           Period[]
   tags              Tag[]
 
   @@map("user")
@@ -185,19 +184,6 @@ model Holiday {
 
   @@index([userId])
   @@map("holidays")
-}
-
-/// The school's bell schedule (period 1 = 07:30–08:15 …). Only used by the timetable editor;
-/// lesson slots store real times, so changing periods later doesn't move existing lessons.
-model Period {
-  userId    String   @map("user_id")
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  number    Int      @db.SmallInt
-  startTime DateTime @map("start_time") @db.Time(0)
-  endTime   DateTime @map("end_time") @db.Time(0)
-
-  @@id([userId, number])
-  @@map("periods")
 }
 
 /// One weekly lesson in the timetable template. Expanded into dated occurrences on read.

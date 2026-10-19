@@ -1,17 +1,11 @@
 import { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { prisma } from '../../db/client.js'
-import { periodsInput, slotInput, slotPatch } from '../../shared/schemas.js'
+import { slotInput, slotPatch } from '../../shared/schemas.js'
 import type { AppEnv } from '../app.js'
 import { toDbTime } from '../lib/datetime.js'
-import { periodDto, slotDto } from '../lib/serialize.js'
+import { slotDto } from '../lib/serialize.js'
 import { readBody } from '../lib/validate.js'
-
-/** Starting bell schedule for new users (editable in the timetable editor). */
-const DEFAULT_PERIODS: [string, string][] = [
-  ['07:30', '08:15'], ['08:20', '09:05'], ['09:20', '10:05'], ['10:10', '10:55'], ['11:05', '11:50'],
-  ['11:55', '12:40'], ['13:30', '14:15'], ['14:20', '15:05'], ['15:20', '16:05'], ['16:10', '16:55'],
-]
 
 async function assertOwned(userId: string, ids: { subjectId?: string; termId?: string }) {
   const [subjectOk, termOk] = await Promise.all([
@@ -22,32 +16,7 @@ async function assertOwned(userId: string, ids: { subjectId?: string; termId?: s
   if (!termOk) throw new HTTPException(400, { message: 'Unknown term' })
 }
 
-export const periods = new Hono<AppEnv>()
-  .get('/', async (c) => {
-    const userId = c.get('user').id
-    let rows = await prisma.period.findMany({ where: { userId }, orderBy: { number: 'asc' } })
-    if (rows.length === 0) {
-      await prisma.period.createMany({
-        data: DEFAULT_PERIODS.map(([s, e], i) => ({ userId, number: i + 1, startTime: toDbTime(s), endTime: toDbTime(e) })),
-        skipDuplicates: true,
-      })
-      rows = await prisma.period.findMany({ where: { userId }, orderBy: { number: 'asc' } })
-    }
-    return c.json(rows.map(periodDto))
-  })
-  .put('/', async (c) => {
-    const userId = c.get('user').id
-    const input = await readBody(c, periodsInput)
-    await prisma.$transaction([
-      prisma.period.deleteMany({ where: { userId } }),
-      prisma.period.createMany({
-        data: input.map((p) => ({ userId, number: p.number, startTime: toDbTime(p.startTime), endTime: toDbTime(p.endTime) })),
-      }),
-    ])
-    const rows = await prisma.period.findMany({ where: { userId }, orderBy: { number: 'asc' } })
-    return c.json(rows.map(periodDto))
-  })
-
+/** Weekly lessons ("slots"): weekday + real start/end time, per term. */
 export const slots = new Hono<AppEnv>()
   .get('/', async (c) => {
     const termId = c.req.query('termId')

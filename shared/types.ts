@@ -24,12 +24,6 @@ export interface Holiday {
   endDate: string
 }
 
-export interface Period {
-  number: number
-  startTime: string
-  endTime: string
-}
-
 export interface LessonSlot {
   id: string
   subjectId: string

@@ -11,7 +11,7 @@ import { settings } from './routes/settings.js'
 import { subjects } from './routes/subjects.js'
 import { tags } from './routes/tags.js'
 import { holidays, terms } from './routes/terms.js'
-import { periods, slots } from './routes/timetable.js'
+import { slots } from './routes/timetable.js'
 
 export type AppEnv = {
   Variables: { user: AuthUser; session: AuthSession }
@@ -42,7 +42,6 @@ app.get('/me', (c) => {
 app.route('/subjects', subjects)
 app.route('/terms', terms)
 app.route('/holidays', holidays)
-app.route('/periods', periods)
 app.route('/slots', slots)
 app.route('/settings', settings)
 app.route('/calendar', calendar)

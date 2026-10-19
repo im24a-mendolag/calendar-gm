@@ -1,5 +1,5 @@
 import type * as db from '../../generated/prisma/client.js'
-import type { Holiday, LessonSlot, Period, Subject, Term } from '../../shared/types.js'
+import type { Holiday, LessonSlot, Subject, Term } from '../../shared/types.js'
 import { fromDbDate, fromDbTime } from './datetime.js'
 
 export const subjectDto = (s: db.Subject): Subject => ({
@@ -22,12 +22,6 @@ export const holidayDto = (h: db.Holiday): Holiday => ({
   name: h.name,
   startDate: fromDbDate(h.startDate),
   endDate: fromDbDate(h.endDate),
-})
-
-export const periodDto = (p: db.Period): Period => ({
-  number: p.number,
-  startTime: fromDbTime(p.startTime),
-  endTime: fromDbTime(p.endTime),
 })
 
 export const slotDto = (s: db.LessonSlot): LessonSlot => ({

@@ -1,74 +1,70 @@
 import { useState } from 'react'
-import type { LessonSlot, Period, Subject } from '../../../shared/types'
+import { toMinutes } from '../../../shared/dates'
+import type { LessonSlot, Subject } from '../../../shared/types'
 import { Popover, PopoverForm } from '../../components/Popover'
+import { TimeField } from '../../components/TimeField'
 import { WEEKDAYS_SHORT } from '../../lib/format'
 import { useCreateSlot, useDeleteSlot, useUpdateSlot } from '../../lib/queries'
 
-export interface LessonDraft {
-  slot?: LessonSlot
-  weekday: number
-  fromPeriod: number
-  toPeriod: number
-}
-
+/** Add or edit one weekly lesson. Times are free — type any start and end. */
 export function LessonPopover({
   anchor,
-  draft,
+  slot,
+  weekday,
+  startTime: start0,
+  endTime: end0,
   termId,
   termName,
   subjects,
-  periods,
   onClose,
 }: {
   anchor: HTMLElement
-  draft: LessonDraft
+  /** Existing lesson to edit; otherwise a new one is created. */
+  slot?: LessonSlot
+  weekday: number
+  startTime: string
+  endTime: string
   termId: string
   termName: string
   subjects: Subject[]
-  periods: Period[]
   onClose: () => void
 }) {
   const create = useCreateSlot()
   const update = useUpdateSlot()
   const remove = useDeleteSlot()
-  const [subjectId, setSubjectId] = useState(draft.slot?.subjectId ?? subjects[0]?.id ?? '')
-  const [from, setFrom] = useState(draft.fromPeriod)
-  const [to, setTo] = useState(draft.toPeriod)
-  const [room, setRoom] = useState(draft.slot?.room ?? subjects[0]?.defaultRoom ?? '')
-  // Until you type a room yourself, it follows the selected subject's usual room.
-  const [roomTouched, setRoomTouched] = useState(Boolean(draft.slot))
+  const [subjectId, setSubjectId] = useState(slot?.subjectId ?? '')
+  const [startTime, setStart] = useState(slot?.startTime ?? start0)
+  const [endTime, setEnd] = useState(slot?.endTime ?? end0)
+  const [room, setRoom] = useState(slot?.room ?? '')
+  // Until you type a room yourself, it follows the subject's usual room.
+  const [roomTouched, setRoomTouched] = useState(Boolean(slot))
   const error = create.error ?? update.error ?? remove.error
-
-  const start = periods.find((p) => p.number === from)
-  const end = periods.find((p) => p.number === Math.max(from, to))
-  const subject = subjects.find((s) => s.id === subjectId)
+  const timesOk = toMinutes(endTime) > toMinutes(startTime)
 
   async function save() {
-    if (!start || !end || !subjectId) return
-    const data = { subjectId, weekday: draft.weekday, startTime: start.startTime, endTime: end.endTime, room: room || null }
-    if (draft.slot) await update.mutateAsync({ id: draft.slot.id, ...data })
+    if (!subjectId || !timesOk) return
+    const data = { subjectId, weekday, startTime, endTime, room: room || null }
+    if (slot) await update.mutateAsync({ id: slot.id, ...data })
     else await create.mutateAsync({ ...data, termId })
     onClose()
   }
 
-  const periodLabel = from === Math.max(from, to) ? `P${from}` : `P${from}–${Math.max(from, to)}`
-
   return (
-    <Popover anchor={anchor} onClose={onClose} label={draft.slot ? 'Edit lesson' : 'Add lesson'}>
+    <Popover anchor={anchor} onClose={onClose} label={slot ? 'Edit lesson' : 'Add lesson'}>
       <PopoverForm
-        title={draft.slot ? 'Edit lesson' : 'Add lesson'}
-        meta={`${WEEKDAYS_SHORT[draft.weekday - 1]} · ${periodLabel}`}
+        title={slot ? 'Edit lesson' : 'Add lesson'}
+        meta={`${WEEKDAYS_SHORT[weekday - 1]} · ${startTime}–${endTime}`}
         onSubmit={() => void save().catch(() => {})}
         actions={
           <>
-            {draft.slot ? (
-              <button type="button" className="btn btn-danger" onClick={() => void remove.mutateAsync(draft.slot!.id).then(onClose, () => {})}>
+            {slot ? (
+              <button type="button" className="btn btn-danger" onClick={() => void remove.mutateAsync(slot.id).then(onClose, () => {})}>
                 Remove
               </button>
             ) : (
               <span />
             )}
-            <button type="submit" className="btn btn-primary" disabled={!subjectId}>
+            <button type="submit" className="btn btn-primary" disabled={!subjectId || !timesOk}>
               Done
             </button>
           </>
@@ -79,13 +75,13 @@ export function LessonPopover({
           <select
             className="input"
             value={subjectId}
+            autoFocus={!slot}
             onChange={(e) => {
               setSubjectId(e.target.value)
-              const next = subjects.find((s) => s.id === e.target.value)
-              if (!roomTouched) setRoom(next?.defaultRoom ?? '')
+              if (!roomTouched) setRoom(subjects.find((s) => s.id === e.target.value)?.defaultRoom ?? '')
             }}
-            data-subject={subject?.color}
           >
+            {!subjectId && <option value="">Choose a subject…</option>}
             {subjects.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -95,33 +91,21 @@ export function LessonPopover({
         </label>
         <div className="field-row">
           <label className="field">
-            <span>From</span>
-            <select className="input input-mono" value={from} onChange={(e) => setFrom(Number(e.target.value))}>
-              {periods.map((p) => (
-                <option key={p.number} value={p.number}>
-                  {p.number} · {p.startTime}
-                </option>
-              ))}
-            </select>
+            <span>Start</span>
+            <TimeField value={startTime} onChange={setStart} label="Start" />
           </label>
           <label className="field">
-            <span>To</span>
-            <select className="input input-mono" value={Math.max(from, to)} onChange={(e) => setTo(Number(e.target.value))}>
-              {periods
-                .filter((p) => p.number >= from)
-                .map((p) => (
-                  <option key={p.number} value={p.number}>
-                    {p.number} · {p.endTime}
-                  </option>
-                ))}
-            </select>
+            <span>End</span>
+            <TimeField value={endTime} onChange={setEnd} label="End" />
           </label>
         </div>
+        {!timesOk && <p className="t-caption c-now">The end must be after the start.</p>}
         <label className="field">
           <span>Room</span>
           <input
             className="input input-mono"
             value={room}
+            maxLength={40}
             onChange={(e) => {
               setRoom(e.target.value)
               setRoomTouched(true)

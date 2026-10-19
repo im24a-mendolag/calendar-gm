@@ -24,11 +24,6 @@ const named = z.string().trim().min(1).max(60)
 export const termInput = z.object({ name: named, startDate: isoDate, endDate: isoDate }).refine(datesInOrder, datesError)
 export const holidayInput = z.object({ name: named, startDate: isoDate, endDate: isoDate }).refine(datesInOrder, datesError)
 
-export const periodsInput = z
-  .array(z.object({ number: z.number().int().min(1).max(20), startTime: hhmm, endTime: hhmm }).refine(timesInOrder, timesError))
-  .max(20)
-  .refine((ps) => new Set(ps.map((p) => p.number)).size === ps.length, 'Period numbers must be unique')
-
 export const slotInput = z
   .object({ subjectId: z.uuid(), termId: z.uuid(), weekday, startTime: hhmm, endTime: hhmm, room: optionalText })
   .refine(timesInOrder, timesError)
@@ -55,7 +50,6 @@ export const wakeTimesInput = z.array(z.object({ weekday, time: hhmm.nullable() 
 export type SubjectInput = z.infer<typeof subjectInput>
 export type TermInput = z.infer<typeof termInput>
 export type HolidayInput = z.infer<typeof holidayInput>
-export type PeriodsInput = z.infer<typeof periodsInput>
 export type SlotInput = z.infer<typeof slotInput>
 export type SlotPatch = z.infer<typeof slotPatch>
 export type SettingsPatch = z.infer<typeof settingsPatch>
@@ -113,3 +107,4 @@ export const lessonExceptionInput = z
     message: 'Change the time or the room (or cancel the lesson)',
   })
 export type LessonExceptionInput = z.infer<typeof lessonExceptionInput>
+

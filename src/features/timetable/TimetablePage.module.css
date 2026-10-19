@@ -63,11 +63,7 @@
   color: var(--color-text-secondary);
 }
 
-.periodsBtn {
-  align-self: flex-start;
-}
-
-/* --- period grid --- */
+/* --- time grid: lessons sit at their real times --- */
 /* Takes the remaining width next to the subject list (scrolls sideways on phones, see below). */
 .gridScroll {
   flex: 1;
@@ -75,73 +71,77 @@
 }
 
 .grid {
-  flex: 1;
-  min-width: 0;
+  --gutter: 64px;
+}
+
+.headRow {
   display: grid;
-  grid-template-columns: 104px repeat(var(--days), minmax(0, 1fr));
-  /* hairlines: each cell draws its own top + left border */
+  grid-template-columns: var(--gutter) repeat(var(--days), minmax(0, 1fr));
+  border-bottom: 1px solid var(--color-border-subtle);
 }
 
 .corner,
 .dayHead {
   display: flex;
   align-items: center;
+  height: 38px;
   padding-left: var(--space-3);
-  border-bottom: 1px solid var(--color-border-subtle);
-}
-
-.corner {
-  padding-left: 14px;
 }
 
 .dayHead {
   border-left: 1px solid var(--color-border-subtle);
 }
 
-.periodCell {
-  grid-column: 1;
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px 14px;
-  border-top: 1px solid var(--color-border-subtle);
+.body {
+  position: relative;
 }
 
-.periodTimes {
+.hourLine {
+  position: absolute;
+  left: var(--gutter);
+  right: 0;
+  height: 1px;
+  background: var(--color-border-subtle);
+}
+
+.hourLine span {
+  position: absolute;
+  left: calc(-1 * var(--gutter) + 12px);
+  top: -7px;
+}
+
+.dayColumns {
+  position: absolute;
+  inset: 0 0 0 var(--gutter);
+  display: grid;
+  grid-template-columns: repeat(var(--days), minmax(0, 1fr));
+}
+
+.dayColumn {
+  position: relative;
+  border-left: 1px solid var(--color-border-subtle);
+  cursor: cell;
+}
+
+.dayColumn:hover {
+  background: color-mix(in srgb, var(--color-bg-canvas) 60%, transparent);
+}
+
+/* Placeholder for the lesson being added */
+.ghost {
+  position: absolute;
+  left: 3px;
+  right: 3px;
+  z-index: 3;
   display: flex;
   flex-direction: column;
-}
-
-.periodTimes span + span {
-  opacity: 0.7;
-}
-
-.breakRow {
-  grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  padding-left: 14px;
-  border-top: 1px solid var(--color-border-subtle);
-  background: var(--color-bg-canvas);
-}
-
-.emptyCell {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  border: 0;
-  border-top: 1px solid var(--color-border-subtle);
-  border-left: 1px solid var(--color-border-subtle);
-  background: none;
-  color: transparent;
-  cursor: pointer;
-}
-
-.emptyCell:hover,
-.emptyCell:focus-visible {
-  color: var(--color-text-tertiary);
-  background: var(--color-bg-canvas);
+  gap: 2px;
+  overflow: hidden;
+  padding: 6px 8px 6px 11px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-surface);
+  box-shadow: inset 3px 0 0 var(--color-accent-ink), var(--shadow-popover);
+  pointer-events: none;
 }
 
 /* --- subject popover --- */
@@ -162,22 +162,6 @@
 .colorOption[aria-checked='true'] {
   outline: 2px solid var(--color-accent-ink);
   outline-offset: 2px;
-}
-
-/* --- periods popover --- */
-.periodList {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 340px;
-  overflow: auto;
-}
-
-.periodRow {
-  display: grid;
-  grid-template-columns: 20px 1fr 1fr 30px;
-  align-items: center;
-  gap: 6px;
 }
 
 @media (max-width: 1100px) {

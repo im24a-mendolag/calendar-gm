@@ -10,7 +10,8 @@ A calendar web app for school and personal life. You enter your school timetable
 
 - **Timetable editor**
   - Set up subjects (with colour, teacher and usual room), terms and holidays.
-  - Click a slot in the period grid to add a lesson.
+  - Lessons sit at their real times on a time grid (no fixed periods), so 08:40–09:25 and a 08:35–12:05 block both look right.
+  - Click an empty spot to add a lesson there, and click a lesson to change its subject, start, end or room. Times can be typed as `840`, `8.40` or `08:40`.
 - **Week view**
   - The timetable expanded into real lessons for each week. Holidays and days outside the term are skipped.
   - Your wake-up time at the start of each day and a red "now" line.
@@ -156,7 +157,7 @@ server/
   app.ts                Hono app: auth handler, session check, routes, error handling
   auth.ts               Better Auth config
   dev.ts                Local API server (port 3001)
-  routes/               subjects, terms + holidays, periods + lesson slots, settings, calendar
+  routes/               subjects, terms + holidays, lesson slots, settings, calendar, events, homework, lessons (single-date changes), .ics
   lib/                  date/time conversion, response mapping, request validation
 db/client.ts            Prisma client (Neon adapter)
 prisma/
@@ -184,7 +185,6 @@ src/
 - **Dates and times are local.**
   - The API uses plain `'YYYY-MM-DD'` and `'HH:MM'` strings in the user's timezone. A 08:20 lesson stays at 08:20 when the clocks change.
   - Prisma's `Date` objects are converted at the edge, in `server/lib/datetime.ts`.
-- **Periods** (the school's period times) only help the timetable editor place lessons. Lessons store real times, so editing period times doesn't move existing lessons.
 - **Data isolation.**
   - Every route except `/api/health` and `/api/auth/*` requires a session.
   - Every database query is filtered by the signed-in user's id.
