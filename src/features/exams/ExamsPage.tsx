@@ -7,6 +7,7 @@ import { WEEKDAYS_SHORT, monthName, shortDate, todayIso } from '../../lib/format
 import { useDeleteEvent, useEvents, useSubjects } from '../../lib/queries'
 import { EventPopover } from '../events/EventPopover'
 import styles from './ExamsPage.module.css'
+import { ImportExamsDialog } from './ImportExamsDialog'
 
 type Open = { anchor: HTMLElement; event?: CalendarEvent }
 
@@ -21,6 +22,7 @@ export function ExamsPage() {
   const remove = useDeleteEvent()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [open, setOpen] = useState<Open | null>(null)
+  const [importing, setImporting] = useState(false)
   const subjectById = useMemo(() => new Map((subjects.data ?? []).map((s) => [s.id, s])), [subjects.data])
 
   const list = useMemo(() => (view === 'upcoming' ? upcoming.data : past.data) ?? [], [view, upcoming.data, past.data])
@@ -58,10 +60,14 @@ export function ExamsPage() {
             Past
           </button>
         </div>
+        <button type="button" className="btn btn-secondary" onClick={() => setImporting(true)}>
+          Import exams
+        </button>
         <button type="button" className="btn btn-primary" onClick={(e) => setOpen({ anchor: e.currentTarget })}>
           New exam
         </button>
       </header>
+      {importing && <ImportExamsDialog onClose={() => setImporting(false)} />}
 
       {list.length === 0 ? (
         <div className={`card ${styles.empty}`}>

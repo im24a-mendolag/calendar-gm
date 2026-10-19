@@ -7,6 +7,7 @@ import { events } from './routes/events.js'
 import { homework } from './routes/homework.js'
 import { ics } from './routes/ics.js'
 import { lessons } from './routes/lessons.js'
+import { schoolImport } from './routes/schoolImport.js'
 import { settings } from './routes/settings.js'
 import { subjects } from './routes/subjects.js'
 import { tags } from './routes/tags.js'
@@ -49,6 +50,7 @@ app.route('/tags', tags)
 app.route('/events', events)
 app.route('/homework', homework)
 app.route('/lessons', lessons)
+app.route('/import', schoolImport)
 app.route('/', ics)
 
 app.onError((err, c) => {

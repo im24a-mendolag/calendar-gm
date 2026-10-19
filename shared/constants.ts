@@ -34,5 +34,8 @@ export const EVENT_KIND_LABELS: Record<EventKind, string> = {
 }
 
 /** Subject palette keys — the hex values live in src/styles/tokens.css (from Figma). */
-export const SUBJECT_COLORS = ['blue', 'orange', 'violet', 'teal', 'green', 'amber', 'pink', 'brown'] as const
+export const SUBJECT_COLORS = [
+  'blue', 'orange', 'violet', 'teal', 'green', 'amber', 'pink', 'brown',
+  'red', 'cyan', 'lime', 'navy', 'plum', 'olive', 'slate', 'rose',
+] as const
 export type SubjectColor = (typeof SUBJECT_COLORS)[number]

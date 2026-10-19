@@ -40,6 +40,10 @@ A calendar web app for school and personal life. You enter your school timetable
 - **Exams:** upcoming and past exams, tests and presentations grouped by month.
   - A detail panel shows the countdown, time, room, teacher, topics and notes.
   - Countdowns turn red within the "soon" window you set per event (default 3 days).
+- **Import exams** (Exams page): paste the exam list copied from the school portal.
+  - The year is worked out from the week column ("31.08. - 06.09.26").
+  - Subject codes (M, D, WR, FRw, …) are matched to your subjects or created as new ones, and your choices are remembered.
+  - Pasting the list again updates the exams instead of duplicating them.
 - **Sidebar "Coming up":** the next three exams, tests, presentations, appointments or interviews.
 - **Homework**
   - Quick-add bar: press **N** to jump to it, Enter to add.

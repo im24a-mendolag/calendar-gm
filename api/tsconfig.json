@@ -1,0 +1,12 @@
+{
+  // Vercel compiles api/index.ts with the nearest tsconfig.json (walking up from api/).
+  // Without this file it would find the root tsconfig.json — which only lists project references —
+  // and type-check without Node's types (TypeScript 6 no longer includes @types/* by default).
+  "extends": "../tsconfig.node.json",
+  "compilerOptions": {
+    // The server config is check-only (noEmit); Vercel needs emitted JavaScript.
+    "noEmit": false
+  },
+  "include": ["../api", "../server", "../db", "../shared", "../generated"],
+  "exclude": ["../**/*.test.ts"]
+}

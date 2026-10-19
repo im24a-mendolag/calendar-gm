@@ -108,3 +108,33 @@ export const lessonExceptionInput = z
   })
 export type LessonExceptionInput = z.infer<typeof lessonExceptionInput>
 
+
+/** Exams pasted from the school portal, with the user's choice of subject per school code. */
+export const schoolExamImportInput = z.object({
+  subjects: z
+    .array(
+      z.object({
+        code: z.string().trim().min(1).max(20),
+        /** existing subject to use (null = no subject) … */
+        subjectId: z.uuid().nullish(),
+        /** … or a new subject to create for this code */
+        create: z.object({ name: z.string().trim().min(1).max(60), color: z.enum(SUBJECT_COLORS), teacher: optionalText }).nullish(),
+      }),
+    )
+    .max(50),
+  exams: z
+    .array(
+      z.object({
+        key: z.string().min(1).max(100),
+        code: z.string().trim().min(1).max(20),
+        date: isoDate,
+        startTime: hhmm,
+        endTime: hhmm,
+        room: optionalText,
+        note: optionalText,
+      }),
+    )
+    .min(1)
+    .max(500),
+})
+export type SchoolExamImportInput = z.infer<typeof schoolExamImportInput>

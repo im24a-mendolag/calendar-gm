@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient, type QueryKey } from '@tanstack/react-query'
 import type {
   HolidayInput,
+  SchoolExamImportInput,
   SettingsPatch,
   SlotInput,
   SlotPatch,
@@ -165,3 +166,11 @@ export const useImportIcs = () =>
     [keys.events],
   )
 
+
+/** Import exams pasted from the school portal. */
+export const useImportSchoolExams = () =>
+  useApiMutation(
+    (v: SchoolExamImportInput) =>
+      api<{ created: number; updated: number; subjectsCreated: number }>('/import/exams', { method: 'POST', ...json(v) }),
+    [keys.events, keys.subjects],
+  )

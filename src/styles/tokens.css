@@ -25,9 +25,17 @@
   --subject-violet: #8e4ec6;
   --subject-teal: #0d9488;
   --subject-green: #2f9e44;
-  --subject-amber: #c98a00;
+  --subject-amber: #b47c00; /* darkened from #c98a00 so white text on exams stays readable */
   --subject-pink: #d6409f;
   --subject-brown: #9c6b44;
+  --subject-red: #c92a2a;
+  --subject-cyan: #0b7fa3;
+  --subject-lime: #4d8a0b;
+  --subject-navy: #2b3a8c;
+  --subject-plum: #8e2c6e;
+  --subject-olive: #6f6f1c;
+  --subject-slate: #56657a;
+  --subject-rose: #c2255c;
   --tint-alpha: 12%;
 
   --space-1: 4px;
@@ -94,6 +102,14 @@
 [data-subject='amber'] { --subject: var(--subject-amber); }
 [data-subject='pink'] { --subject: var(--subject-pink); }
 [data-subject='brown'] { --subject: var(--subject-brown); }
+[data-subject='red'] { --subject: var(--subject-red); }
+[data-subject='cyan'] { --subject: var(--subject-cyan); }
+[data-subject='lime'] { --subject: var(--subject-lime); }
+[data-subject='navy'] { --subject: var(--subject-navy); }
+[data-subject='plum'] { --subject: var(--subject-plum); }
+[data-subject='olive'] { --subject: var(--subject-olive); }
+[data-subject='slate'] { --subject: var(--subject-slate); }
+[data-subject='rose'] { --subject: var(--subject-rose); }
 [data-subject] {
   --subject-tint: color-mix(in srgb, var(--subject) var(--tint-alpha), var(--color-bg-surface));
 }

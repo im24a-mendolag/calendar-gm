@@ -116,6 +116,14 @@ enum SubjectColor {
   amber
   pink
   brown
+  red
+  cyan
+  lime
+  navy
+  plum
+  olive
+  slate
+  rose
 
   @@map("subject_color")
 }
@@ -130,6 +138,8 @@ enum ExceptionKind {
 enum EventSource {
   manual
   ics
+  /// pasted exam list from the school portal
+  school
 
   @@map("event_source")
 }
