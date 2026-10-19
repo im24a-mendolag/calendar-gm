@@ -17,6 +17,8 @@ export interface GridItem {
   tags: string[]
   /** Set for events (clicking opens the editor). */
   eventId?: string
+  /** Set for lessons (clicking lets you cancel/change this one date). */
+  lesson?: LessonOccurrence
   /** filled in by layoutColumns */
   col: number
   cols: number
@@ -33,17 +35,18 @@ export function lessonItem(l: LessonOccurrence, subject: Subject | undefined): G
     end: toMinutes(l.endTime),
     color: subject?.color ?? null,
     title: subject?.name ?? 'Lesson',
+    lesson: l,
     col: 0,
     cols: 1,
   }
   if (l.status === 'cancelled') return { ...base, variant: 'cancelled', tags: ['Lesson'], meta: joinMeta('Cancelled', l.startTime, l.note) }
   if (l.status === 'changed')
-    return { ...base, variant: 'tagged', tags: ['Lesson', 'Changed'], meta: joinMeta(timeRange(l.startTime, l.endTime), l.room) }
+    return { ...base, variant: 'tagged', tags: ['Changed', 'Lesson'], meta: joinMeta(timeRange(l.startTime, l.endTime), l.room) }
   return { ...base, variant: 'lesson', tags: ['Lesson'], meta: joinMeta(timeRange(l.startTime, l.endTime), l.room) }
 }
 
 export function eventItem(e: CalendarEvent, subject: Subject | undefined): GridItem | null {
-  if (e.allDay || !e.startTime) return null
+  if (e.allDay || !e.startTime || isMultiDay(e)) return null
   const end = e.endTime ?? e.startTime
   const color = subject?.color ?? null
   const assessed = ASSESSED_KINDS.includes(e.kind)
@@ -106,4 +109,50 @@ export function layoutColumns(items: GridItem[]): GridItem[] {
   }
   flush()
   return out
+}
+
+/** Multi-day events live in the all-day row, not the time grid. */
+export const isMultiDay = (e: Pick<CalendarEvent, 'date' | 'endDate'>) => !!e.endDate && e.endDate > e.date
+
+// ---------------------------------------------------------------------------
+// All-day row: bars spanning day columns, stacked into lanes
+// ---------------------------------------------------------------------------
+
+/** Put each [from, to] span (inclusive column indexes) in the first lane where it doesn't overlap. */
+export function assignLanes<T extends { from: number; to: number }>(items: T[]): (T & { lane: number })[] {
+  const sorted = [...items].sort((a, b) => a.from - b.from || b.to - b.from - (a.to - a.from))
+  const laneEnds: number[] = []
+  return sorted.map((item) => {
+    let lane = laneEnds.findIndex((end) => end < item.from)
+    if (lane === -1) lane = laneEnds.push(-1) - 1
+    laneEnds[lane] = item.to
+    return { ...item, lane }
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Drag & drop in the time grid (minutes since midnight, 15-minute steps)
+// ---------------------------------------------------------------------------
+
+export const SNAP_MIN = 15
+const DAY_END = 24 * 60
+const snap = (m: number) => Math.round(m / SNAP_MIN) * SNAP_MIN
+
+/** Move an event by `delta` minutes: snapped, same duration, kept inside the day. */
+export function moveTimes(start: number, end: number, delta: number) {
+  const duration = end - start
+  const s = Math.min(Math.max(snap(start + delta), 0), DAY_END - duration)
+  return { start: s, end: s + duration }
+}
+
+/** Drag the bottom edge by `delta` minutes: snapped, at least one step long, not past midnight. */
+export function resizeEnd(start: number, end: number, delta: number) {
+  return { start, end: Math.min(Math.max(snap(end + delta), start + SNAP_MIN), DAY_END) }
+}
+
+/** Create-by-drag: from where you pressed to where you are, at least one step, in either direction. */
+export function selection(a: number, b: number) {
+  const s = snap(Math.min(a, b))
+  const e = Math.max(snap(Math.max(a, b)), s + SNAP_MIN)
+  return { start: Math.max(s, 0), end: Math.min(e, DAY_END) }
 }

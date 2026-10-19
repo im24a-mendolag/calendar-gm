@@ -1,13 +1,8 @@
-.page {
-  min-width: 720px;
-}
-
 .grid {
   --gutter: 56px;
 }
 
-.headRow,
-.dueRow {
+.headRow {
   display: grid;
   grid-template-columns: var(--gutter) repeat(var(--days), minmax(0, 1fr));
   border-bottom: 1px solid var(--color-border-subtle);
@@ -37,35 +32,96 @@
   color: var(--color-accent-on-ink);
 }
 
-.dueRow {
+/* --- all-day row: homework, all-day and multi-day events, stacked in lanes --- */
+.allDayRow {
+  display: grid;
+  grid-template-columns: var(--gutter) repeat(var(--days), minmax(0, 1fr));
+  row-gap: 4px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--color-border-subtle);
   background: var(--color-bg-canvas);
-  min-height: 34px;
 }
 
-.dueLabel {
+.allDayLabel {
+  grid-column: 1;
   display: flex;
   align-items: center;
-  padding-left: 10px;
+  padding-left: 8px;
+  white-space: nowrap;
 }
 
-.dueCell {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 5px 4px;
-  min-width: 0;
+/* full-height cells that draw the day dividers behind the chips */
+.allDayCell {
   border-left: 1px solid var(--color-border-subtle);
+  margin: -5px 0;
 }
 
-.dueChip {
+.dueChip,
+.bar {
+  z-index: 1;
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 6px;
+  min-width: 0;
+  margin: 0 4px;
+  padding: 0 6px;
   border: 1px solid var(--color-border-subtle);
   border-radius: var(--radius-sm);
   background: var(--color-bg-surface);
-  min-width: 0;
+  font: inherit;
+  font-size: 11px;
+  line-height: 14px;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dueChip:hover,
+.bar:hover {
+  border-color: var(--color-border-strong);
+}
+
+/* multi-day / all-day events: same language as the grid blocks */
+.bar {
+  border: 0;
+  background: var(--subject-tint);
+  box-shadow: inset 3px 0 0 var(--subject);
+  padding-left: 9px;
+}
+
+.barPersonal {
+  background: var(--color-bg-surface);
+  box-shadow: inset 3px 0 0 var(--color-accent-ink), inset 0 0 0 1px var(--color-border-strong);
+}
+
+/* continues from last week / into next week */
+.barCutStart {
+  margin-left: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  box-shadow: none;
+}
+.barCutStart.barPersonal {
+  box-shadow: inset 0 0 0 1px var(--color-border-strong);
+}
+.barCutEnd {
+  margin-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.barTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barTag {
+  margin-left: auto;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--color-bg-sunken);
+  color: var(--color-text-secondary);
 }
 
 .dueBox {
@@ -186,18 +242,155 @@
   margin: 0;
 }
 
+/* --- interactions --- */
 .dayColumn {
   cursor: cell;
+  touch-action: none;
 }
 
-/* Where a new event will go while its popover is open. */
+.dragging,
+.dragging * {
+  cursor: grabbing !important;
+}
+
+/* Draggable event card (wraps a Block) */
+.card {
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  border-radius: var(--radius-sm);
+}
+
+.card:focus-visible {
+  outline: 2px solid var(--color-accent-ink);
+  outline-offset: 1px;
+}
+
+.cardDragging {
+  z-index: 4;
+  box-shadow: var(--shadow-popover);
+  opacity: 0.92;
+}
+
+.cardSaving {
+  opacity: 0.7;
+}
+
+/* Bottom edge: drag to change the end time */
+.resizeHandle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 8px;
+  cursor: ns-resize;
+}
+
+.resizeHandle::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 4px;
+  width: 16px;
+  height: 2px;
+  margin-left: -8px;
+  border-radius: 1px;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 120ms;
+}
+
+.card:hover .resizeHandle::after {
+  opacity: 0.35;
+}
+
+/* The new event's card while you drag a range or fill in the popover */
 .ghost {
   position: absolute;
   left: 4px;
   right: 4px;
-  border: 1.5px dashed var(--color-accent-ink);
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow: hidden;
+  padding: 6px 8px 6px 11px;
   border-radius: var(--radius-sm);
-  background: var(--color-bg-hover);
+  background: var(--color-bg-surface);
+  box-shadow: inset 3px 0 0 var(--color-accent-ink), var(--shadow-popover);
   pointer-events: none;
-  z-index: 1;
+}
+
+.ghostTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* --- view switch + phone day strip --- */
+.viewSwitch a {
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.strip {
+  display: flex;
+  gap: 4px;
+  margin-bottom: var(--space-3);
+}
+
+.stripDay {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 0;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: none;
+  color: var(--color-text-primary);
+  font: inherit;
+  cursor: pointer;
+}
+
+.stripDay .t-label {
+  color: var(--color-text-tertiary);
+}
+
+.stripSelected {
+  background: var(--color-accent-ink);
+  color: var(--color-accent-on-ink);
+}
+
+.stripDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--color-accent-now);
+}
+
+@media (min-width: 761px) {
+  .page {
+    min-width: 720px;
+  }
+}
+
+@media (max-width: 760px) {
+  .page :global(.page-header) {
+    flex-wrap: wrap;
+  }
+  .page :global(.page-header .titles) {
+    flex-basis: 100%;
+  }
+}
+
+/* Fingers scroll the grid; cards open on tap instead of dragging. */
+@media (pointer: coarse) {
+  .card,
+  .dayColumn {
+    touch-action: auto;
+  }
 }

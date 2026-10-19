@@ -7,7 +7,7 @@ import { isoDate } from '../../shared/schemas.js'
 import type { CalendarDay, CalendarEvent, CalendarHomework, CalendarResponse, LessonException } from '../../shared/types.js'
 import type { AppEnv } from '../app.js'
 import { fromDbDate, fromDbTimeOrNull, toDbDate } from '../lib/datetime.js'
-import { eventDto, eventInclude } from '../lib/events.js'
+import { eventDto, eventInclude, overlapping } from '../lib/events.js'
 import { holidayDto, slotDto, termDto } from '../lib/serialize.js'
 
 const MAX_RANGE_DAYS = 62
@@ -28,7 +28,7 @@ export const calendar = new Hono<AppEnv>().get('/', async (c) => {
     prisma.holiday.findMany({ where: { userId } }),
     prisma.lessonException.findMany({ where: { userId, date: range } }),
     prisma.event.findMany({
-      where: { userId, date: range },
+      where: { userId, ...overlapping(from.data, to.data) },
       orderBy: [{ date: 'asc' }, { startTime: 'asc' }],
       include: eventInclude,
     }),

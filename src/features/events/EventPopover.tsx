@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   ASSESSED_KINDS,
   COUNTDOWN_KINDS,
@@ -16,7 +16,7 @@ import { TagPicker } from './TagPicker'
 
 const SCHOOL_KINDS: EventKind[] = ['exam', 'test', 'presentation', 'deadline']
 
-/** Starting values for a new event (e.g. from a click in the week grid). */
+/** Starting values for a new event (e.g. from a click or drag in the week grid). */
 export interface EventDraft {
   kind?: EventKind
   date: string
@@ -25,16 +25,29 @@ export interface EventDraft {
   subjectId?: string | null
 }
 
+/** What the grid's placeholder card shows while you type. */
+export interface DraftPreview {
+  title: string
+  date: string
+  startTime: string | null
+  endTime: string | null
+}
+
 export function EventPopover({
   anchor,
   event,
   draft,
+  compact = false,
+  onPreview,
   onClose,
 }: {
   anchor: HTMLElement
   /** Existing event to edit; otherwise a new one is created from `draft`. */
   event?: CalendarEvent
   draft?: EventDraft
+  /** Start with just title / type / time; "More options" reveals the rest. */
+  compact?: boolean
+  onPreview?: (p: DraftPreview) => void
   onClose: () => void
 }) {
   const subjects = useSubjects()
@@ -42,12 +55,14 @@ export function EventPopover({
   const remove = useDeleteEvent()
 
   const start0 = event?.startTime ?? draft?.startTime ?? '08:00'
+  const [expanded, setExpanded] = useState(!compact)
   const [kind, setKind] = useState<EventKind>(event?.kind ?? draft?.kind ?? 'exam')
   const [subjectId, setSubjectId] = useState<string>(event?.subjectId ?? draft?.subjectId ?? '')
   const [title, setTitle] = useState(event?.title ?? '')
   // Untouched titles of school events follow the chosen subject ("Maths").
   const [titleTouched, setTitleTouched] = useState(Boolean(event))
   const [date, setDate] = useState(event?.date ?? draft?.date ?? '')
+  const [endDate, setEndDate] = useState(event?.endDate ?? '')
   const [allDay, setAllDay] = useState(event?.allDay ?? kind === 'deadline')
   const [startTime, setStart] = useState(start0)
   const [endTime, setEnd] = useState(event?.endTime ?? draft?.endTime ?? fromMinutes(Math.min(toMinutes(start0) + 60, 23 * 60 + 59)))
@@ -59,9 +74,19 @@ export function EventPopover({
 
   const school = SCHOOL_KINDS.includes(kind)
   const assessed = ASSESSED_KINDS.includes(kind)
+  const multiDay = !!endDate && endDate > date
   const subjectName = subjects.data?.find((s) => s.id === subjectId)?.name ?? ''
   const shownTitle = titleTouched || !school ? title : subjectName
   const error = save.error ?? remove.error
+
+  useEffect(() => {
+    onPreview?.({
+      title: shownTitle || EVENT_KIND_LABELS[kind],
+      date,
+      startTime: allDay ? null : startTime,
+      endTime: allDay ? null : endTime,
+    })
+  }, [onPreview, shownTitle, kind, date, allDay, startTime, endTime])
 
   function pickSubject(id: string) {
     setSubjectId(id)
@@ -76,6 +101,7 @@ export function EventPopover({
       title: shownTitle.trim() || EVENT_KIND_LABELS[kind],
       subjectId: school ? subjectId || null : null,
       date,
+      endDate: multiDay ? endDate : null,
       allDay,
       startTime: allDay ? null : startTime,
       endTime: allDay ? null : endTime || null,
@@ -92,7 +118,7 @@ export function EventPopover({
     <Popover anchor={anchor} onClose={onClose} label={event ? 'Edit event' : 'New event'} width={340}>
       <PopoverForm
         title={event ? 'Edit event' : 'New event'}
-        meta={date ? shortDate(date) : undefined}
+        meta={date ? shortDate(date) + (multiDay ? ` – ${shortDate(endDate)}` : '') : undefined}
         onSubmit={() => void submit().catch(() => {})}
         actions={
           <>
@@ -100,8 +126,12 @@ export function EventPopover({
               <button type="button" className="btn btn-danger" onClick={() => void remove.mutateAsync(event.id).then(onClose, () => {})}>
                 Delete
               </button>
-            ) : (
+            ) : expanded ? (
               <span />
+            ) : (
+              <button type="button" className="btn btn-ghost" onClick={() => setExpanded(true)}>
+                More options
+              </button>
             )}
             <button type="submit" className="btn btn-primary" disabled={!date || save.isPending}>
               {event ? 'Done' : 'Add'}
@@ -109,6 +139,20 @@ export function EventPopover({
           </>
         }
       >
+        <label className="field">
+          <span>Title</span>
+          <input
+            className="input"
+            value={shownTitle}
+            placeholder={school ? 'Defaults to the subject' : EVENT_KIND_LABELS[kind]}
+            onChange={(e) => {
+              setTitle(e.target.value)
+              setTitleTouched(true)
+            }}
+            maxLength={100}
+          />
+        </label>
+
         <div className="field-row">
           <label className="field">
             <span>Type</span>
@@ -145,79 +189,82 @@ export function EventPopover({
           )}
         </div>
 
-        <label className="field">
-          <span>Title</span>
-          <input
-            className="input"
-            value={shownTitle}
-            placeholder={school ? 'Defaults to the subject' : EVENT_KIND_LABELS[kind]}
-            onChange={(e) => {
-              setTitle(e.target.value)
-              setTitleTouched(true)
-            }}
-            maxLength={100}
-          />
-        </label>
-
         <div className="field-row">
           <label className="field">
-            <span>Date</span>
+            <span>{multiDay ? 'From' : 'Date'}</span>
             <input className="input input-mono" type="date" value={date} onChange={(e) => setDate(e.target.value)} required />
           </label>
+          <label className="field">
+            <span>Until (optional)</span>
+            <input
+              className="input input-mono"
+              type="date"
+              value={endDate}
+              min={date}
+              onChange={(e) => setEndDate(e.target.value)}
+              aria-label="Last day (for events over several days)"
+            />
+          </label>
+        </div>
+
+        <div className={styles.timeRow}>
+          {!allDay && (
+            <>
+              <label className="field">
+                <span>{multiDay ? 'Starts' : 'Start'}</span>
+                <input className="input input-mono" type="time" value={startTime} onChange={(e) => setStart(e.target.value)} required />
+              </label>
+              <label className="field">
+                <span>{multiDay ? 'Ends' : 'End'}</span>
+                <input className="input input-mono" type="time" value={endTime} min={multiDay ? undefined : startTime} onChange={(e) => setEnd(e.target.value)} />
+              </label>
+            </>
+          )}
           <label className={`field ${styles.allDay}`}>
             <span>All day</span>
             <button type="button" role="switch" aria-checked={allDay} aria-label="All day" className="toggle" onClick={() => setAllDay(!allDay)} />
           </label>
         </div>
 
-        {!allDay && (
-          <div className="field-row">
+        {expanded && (
+          <>
             <label className="field">
-              <span>Start</span>
-              <input className="input input-mono" type="time" value={startTime} onChange={(e) => setStart(e.target.value)} required />
+              <span>{school ? 'Room' : 'Place'}</span>
+              <input className="input" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={200} />
             </label>
+
+            {assessed && (
+              <label className="field">
+                <span>Topics</span>
+                <textarea className={`input ${styles.textarea}`} rows={2} value={topics} onChange={(e) => setTopics(e.target.value)} placeholder="One per line, or comma-separated" />
+              </label>
+            )}
+
             <label className="field">
-              <span>End</span>
-              <input className="input input-mono" type="time" value={endTime} min={startTime} onChange={(e) => setEnd(e.target.value)} />
+              <span>Notes</span>
+              <textarea className={`input ${styles.textarea}`} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
             </label>
-          </div>
+
+            {COUNTDOWN_KINDS.includes(kind) && (
+              <label className="field">
+                <span>Highlight as "soon"</span>
+                <select
+                  className="input"
+                  value={reminderDays ?? ''}
+                  onChange={(e) => setReminderDays(e.target.value === '' ? null : Number(e.target.value))}
+                >
+                  {[1, 2, 3, 5, 7, 14].map((n) => (
+                    <option key={n} value={n}>
+                      {n} day{n === 1 ? '' : 's'} before
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            <TagPicker value={tagIds} onChange={setTagIds} />
+          </>
         )}
-
-        <label className="field">
-          <span>{school ? 'Room' : 'Place'}</span>
-          <input className="input" value={location} onChange={(e) => setLocation(e.target.value)} maxLength={200} />
-        </label>
-
-        {assessed && (
-          <label className="field">
-            <span>Topics</span>
-            <textarea className={`input ${styles.textarea}`} rows={2} value={topics} onChange={(e) => setTopics(e.target.value)} placeholder="One per line, or comma-separated" />
-          </label>
-        )}
-
-        <label className="field">
-          <span>Notes</span>
-          <textarea className={`input ${styles.textarea}`} rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
-        </label>
-
-        {COUNTDOWN_KINDS.includes(kind) && (
-          <label className="field">
-            <span>Highlight as "soon"</span>
-            <select
-              className="input"
-              value={reminderDays ?? ''}
-              onChange={(e) => setReminderDays(e.target.value === '' ? null : Number(e.target.value))}
-            >
-              {[1, 2, 3, 5, 7, 14].map((n) => (
-                <option key={n} value={n}>
-                  {n} day{n === 1 ? '' : 's'} before
-                </option>
-              ))}
-            </select>
-          </label>
-        )}
-
-        <TagPicker value={tagIds} onChange={setTagIds} />
 
         {error && <p className="t-caption c-now">{error.message}</p>}
       </PopoverForm>

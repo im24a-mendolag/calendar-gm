@@ -76,6 +76,8 @@ export interface CalendarEvent {
   title: string
   subjectId: string | null
   date: string
+  /** Last day of a multi-day event (inclusive); null = single day. */
+  endDate: string | null
   startTime: string | null
   endTime: string | null
   allDay: boolean
@@ -112,4 +114,15 @@ export interface CalendarResponse {
   lessons: LessonOccurrence[]
   events: CalendarEvent[]
   homework: CalendarHomework[]
+}
+
+export interface Homework {
+  id: string
+  title: string
+  notes: string | null
+  subjectId: string | null
+  dueDate: string
+  done: boolean
+  /** ISO timestamp when it was ticked off */
+  doneAt: string | null
 }

@@ -5,7 +5,7 @@ import { EVENT_KINDS, type EventKind } from '../../shared/constants.js'
 import { eventInput, isoDate } from '../../shared/schemas.js'
 import type { AppEnv } from '../app.js'
 import { toDbDate, toDbTimeOrNull } from '../lib/datetime.js'
-import { eventDto, eventInclude } from '../lib/events.js'
+import { eventDto, eventInclude, overlapping } from '../lib/events.js'
 import { readBody } from '../lib/validate.js'
 
 /** The subject and every tag must belong to the signed-in user. */
@@ -26,6 +26,7 @@ function toData(input: ReturnType<typeof eventInput.parse>) {
     title: input.title,
     subjectId: input.subjectId ?? null,
     date: toDbDate(input.date),
+    endDate: input.endDate && input.endDate > input.date ? toDbDate(input.endDate) : null,
     allDay: input.allDay,
     startTime: timed ? toDbTimeOrNull(input.startTime) : null,
     endTime: timed ? toDbTimeOrNull(input.endTime) : null,
@@ -56,7 +57,10 @@ export const events = new Hono<AppEnv>()
     const rows = await prisma.event.findMany({
       where: {
         userId: c.get('user').id,
-        ...(from || to ? { date: { ...(from ? { gte: toDbDate(from) } : {}), ...(to ? { lte: toDbDate(to) } : {}) } } : {}),
+        ...(from && to ? overlapping(from, to) : {}),
+        // open-ended ranges: still running (from) / started by (to)
+        ...(from && !to ? { OR: [{ date: { gte: toDbDate(from) } }, { endDate: { gte: toDbDate(from) } }] } : {}),
+        ...(to && !from ? { date: { lte: toDbDate(to) } } : {}),
         ...(kinds?.length ? { kind: { in: kinds } } : {}),
       },
       orderBy: [{ date: order }, { startTime: order }],

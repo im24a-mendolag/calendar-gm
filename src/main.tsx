@@ -6,9 +6,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Navigate, createBrowserRouter } from 'react-router'
 import { RouterProvider } from 'react-router/dom'
 import { AppShell } from './components/AppShell'
-import { Placeholder } from './components/Placeholder'
 import { LoginPage } from './features/auth/LoginPage'
 import { ExamsPage } from './features/exams/ExamsPage'
+import { HomeworkPage } from './features/homework/HomeworkPage'
+import { MonthPage } from './features/month/MonthPage'
 import { SettingsPage } from './features/settings/SettingsPage'
 import { TodayPage } from './features/today/TodayPage'
 import { TimetablePage } from './features/timetable/TimetablePage'
@@ -29,8 +30,9 @@ const router = createBrowserRouter([
       { index: true, element: <Navigate to="/today" replace /> },
       { path: '/today', element: <TodayPage /> },
       { path: '/week', element: <WeekPage /> },
+      { path: '/month', element: <MonthPage /> },
       { path: '/exams', element: <ExamsPage /> },
-      { path: '/homework', element: <Placeholder title="Homework" note="Built in step 7." /> },
+      { path: '/homework', element: <HomeworkPage /> },
       { path: '/timetable', element: <TimetablePage /> },
       { path: '/settings', element: <SettingsPage /> },
       { path: '*', element: <Navigate to="/today" replace /> },

@@ -24,8 +24,14 @@ A calendar web app for school and personal life. You enter your school timetable
   - **Overflow:** tags use at most half of a card's width. A tag that's too long is shortened with "…", and the rest go behind **+N**, which lists all tags on hover.
   - An exam replaces the lesson it takes place in. Personal events have their own neutral style.
 - **Events:** create and edit exams, tests, presentations, deadlines and personal events.
-  - Use the **New** button, or click an empty spot in the week grid to start one at that time.
+  - Use the **New** button, or click an empty spot in the week grid (or drag over a time range).
+    - A compact form opens with title, type and time; **More options** shows the rest.
+    - A placeholder card shows the new event live while you type.
+  - **Drag** an event to another time or day, or drag its bottom edge to change the end time (15-minute steps). Lessons stay fixed.
   - Click an event to edit or delete it. You can add tags, including new ones created on the spot.
+  - **Multi-day events:** set **Until**, e.g. for a school trip or a weekend away.
+    - They show as a bar across the days in the week view's All day row.
+    - Today shows them as "day 2/6".
 - **Today**
   - Shows your wake-up time and what's on now (with time left and a progress bar) and next.
   - Lists today's schedule with breaks.
@@ -34,6 +40,24 @@ A calendar web app for school and personal life. You enter your school timetable
   - A detail panel shows the countdown, time, room, teacher, topics and notes.
   - Countdowns turn red within the "soon" window you set per event (default 3 days).
 - **Sidebar "Coming up":** the next three exams, tests, presentations, appointments or interviews.
+- **Homework**
+  - Quick-add bar: press **N** to jump to it, Enter to add.
+  - The due date defaults to the subject's next lesson.
+  - Items are grouped Overdue / Today / Tomorrow / This week / Next week / Later, with an Open/Done switch and open counts per subject.
+  - Tick items off on the Homework page, on Today, or in the week view's Due row.
+- **Month view:** open it with the Week / Month switch.
+  - Exams are shown in solid colour, other events as chips, and holidays are shaded.
+  - Each day shows how much homework is due. Clicking a day opens its week.
+- **Phones:** a bottom tab bar (Today, Week, Exams, Homework, More).
+  - The week view shows one day at a time, with a strip to switch days; red dots mark exam days.
+  - Tap a card to edit it; dragging is for mouse users, so scrolling with a finger doesn't move cards.
+- **Single-lesson changes:** click a lesson in the week view to mark it *Cancelled* or *Changed* (other time or room) for that day only, with a note. *As usual* restores it.
+- **Calendar files (.ics)** in Settings
+  - **Export:** downloads your lessons (one weekly repeat per lesson, with holidays and cancelled lessons left out and changed lessons included) and all events with their tags.
+  - **Import:** adds events from a school portal or another calendar for the next 12 months.
+    - Repeating events are expanded and times converted to your timezone.
+    - "Prüfung" / "Test" / "Präsentation" in a title sets the type, and a subject name in the title links the subject.
+    - Re-importing the same file updates instead of duplicating, and files exported from this app are skipped.
 - **Settings**
   - Wake-up time per weekday. This is display only; the app never rings.
   - Terms and holidays.
@@ -190,7 +214,8 @@ Not deployed yet. The plan:
 - [x] Subjects, terms, holidays, timetable editor, settings
 - [x] Week view
 - [x] Create and edit exams, tests and personal events; Today page; Exams page with countdowns
-- [ ] Homework list
-- [ ] Cancel or change a single lesson from the week view
-- [ ] `.ics` import and export (Google / Apple Calendar)
-- [ ] Mobile layout, month view, polish, deploy to Vercel
+- [x] Homework list
+- [x] Cancel or change a single lesson from the week view
+- [x] `.ics` import and export (Google / Apple Calendar)
+- [x] Mobile layout, month view, polish
+- [ ] Deploy to Vercel

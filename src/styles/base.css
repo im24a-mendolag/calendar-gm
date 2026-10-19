@@ -12,6 +12,11 @@ body,
   height: 100%;
 }
 
+/* The hidden attribute must win over component display rules (grid/flex). */
+[hidden] {
+  display: none !important;
+}
+
 body {
   margin: 0;
   background: var(--color-bg-canvas);
@@ -76,6 +81,7 @@ textarea {
   cursor: pointer;
 }
 .btn:disabled { opacity: 0.5; cursor: default; }
+a.btn { text-decoration: none; }
 .btn-primary { background: var(--color-accent-ink); color: var(--color-accent-on-ink); }
 .btn-secondary { background: var(--color-bg-surface); border-color: var(--color-border-strong); color: var(--color-text-primary); }
 .btn-secondary:hover:not(:disabled) { background: var(--color-bg-hover); }

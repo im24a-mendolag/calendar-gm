@@ -9,6 +9,7 @@ import { useHolidays, useSaveWakeTimes, useSettings, useSlots, useTerms, useUpda
 import { applyTheme, getTheme, type ThemeChoice } from '../../lib/theme'
 import { DateRangePopover, type DateRangeItem } from '../terms/DateRangePopover'
 import styles from './SettingsPage.module.css'
+import { IcsSection } from './IcsSection'
 import { TagsSection } from './TagsSection'
 
 type Open = { kind: 'term' | 'holiday'; anchor: HTMLElement; item?: DateRangeItem }
@@ -166,6 +167,8 @@ export function SettingsPage() {
               </div>
             </div>
           </section>
+
+          <IcsSection />
 
           <TagsSection />
 

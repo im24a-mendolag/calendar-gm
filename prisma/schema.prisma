@@ -248,6 +248,8 @@ model Event {
   subjectId    String?     @map("subject_id") @db.Uuid
   subject      Subject?    @relation(fields: [subjectId], references: [id], onDelete: SetNull)
   date         DateTime    @db.Date
+  /// Last day (inclusive) for multi-day events; null = single day.
+  endDate      DateTime?   @map("end_date") @db.Date
   startTime    DateTime?   @map("start_time") @db.Time(0)
   endTime      DateTime?   @map("end_time") @db.Time(0)
   allDay       Boolean     @default(false) @map("all_day")

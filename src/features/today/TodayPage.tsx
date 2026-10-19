@@ -1,7 +1,7 @@
 import { useMemo, useState, type MouseEvent } from 'react'
 import { Link } from 'react-router'
 import { COUNTDOWN_KINDS, EVENT_KIND_LABELS } from '../../../shared/constants'
-import { addDays, isoWeekNumber, isoWeekday, toMinutes } from '../../../shared/dates'
+import { addDays, daysBetween, isoWeekNumber, isoWeekday, toMinutes } from '../../../shared/dates'
 import type { CalendarEvent, Subject } from '../../../shared/types'
 import { Countdown } from '../../components/Countdown'
 import { Icon } from '../../components/Icon'
@@ -9,7 +9,8 @@ import { WEEKDAYS, WEEKDAYS_SHORT, monthName, shortDate } from '../../lib/format
 import { useCalendar, useSubjects } from '../../lib/queries'
 import { useNow } from '../../lib/useNow'
 import { EventPopover } from '../events/EventPopover'
-import { hideReplacedLessons } from '../week/layout'
+import { HomeworkRow } from '../homework/HomeworkRow'
+import { hideReplacedLessons, isMultiDay } from '../week/layout'
 import styles from './TodayPage.module.css'
 
 const BREAK_MIN = 30
@@ -63,7 +64,7 @@ export function TodayPage() {
       }
     })
     const events = data.events
-      .filter((e) => e.date === today && !e.allDay && e.startTime)
+      .filter((e) => e.date === today && !e.allDay && e.startTime && !isMultiDay(e))
       .map((e): Entry => {
         const start = toMinutes(e.startTime!)
         return {
@@ -90,13 +91,22 @@ export function TodayPage() {
   const next = active.find((e) => e.start > now.minutes)
   const day = data.days.find((d) => d.date === today)
   const firstLesson = active[0]
-  const allDayToday = data.events.filter((e) => e.date === today && (e.allDay || !e.startTime))
+  // All-day events today, plus multi-day events that are running today.
+  const allDayToday = data.events.filter(
+    (e) => (isMultiDay(e) || e.allDay || !e.startTime) && e.date <= today && (e.endDate ?? e.date) >= today,
+  )
+  const dayOf = (e: CalendarEvent) =>
+    isMultiDay(e) ? `day ${daysBetween(e.date, today) + 1}/${daysBetween(e.date, e.endDate!) + 1}` : 'all day'
 
   const comingUp = data.events
     .filter((e) => (COMING_UP_KINDS as readonly string[]).includes(e.kind) && e.date >= today)
     .filter((e) => !(e.date === today && e.endTime && toMinutes(e.endTime) <= now.minutes))
     .slice(0, 8)
-  const homework = data.homework.filter((h) => !h.done && h.dueDate <= addDays(today, 6)).slice(0, 8)
+  // Open ones first; ticked-off ones stay visible (struck through) until their due date passes.
+  const homework = data.homework
+    .filter((h) => h.dueDate <= addDays(today, 6))
+    .sort((a, b) => Number(a.done) - Number(b.done) || a.dueDate.localeCompare(b.dueDate))
+    .slice(0, 8)
 
   const subtitleParts = [`Week ${isoWeekNumber(today)}`]
   if (day?.isHoliday) subtitleParts.push('Holiday')
@@ -195,7 +205,7 @@ export function TodayPage() {
               </div>
               {allDayToday.map((e) => (
                 <button key={e.id} type="button" className={`card-row ${styles.row}`} onClick={(ev) => openEvent(e, ev.currentTarget)}>
-                  <span className={`t-mono-small c-tertiary ${styles.times}`}>all day</span>
+                  <span className={`t-mono-small c-tertiary ${styles.times}`}>{dayOf(e)}</span>
                   <span className={styles.rowBar} data-subject={e.subjectId ? subjectById.get(e.subjectId)?.color : undefined} />
                   <span className={`t-body-strong ${styles.grow}`}>{e.title}</span>
                   {e.kind !== 'other' && <span className={`t-label ${styles.kind}`}>{EVENT_KIND_LABELS[e.kind]}</span>}
@@ -286,19 +296,9 @@ export function TodayPage() {
             </div>
             <div className="card">
               {homework.length === 0 && <div className="card-row t-caption c-tertiary">Nothing due this week.</div>}
-              {homework.map((h) => {
-                const s = h.subjectId ? subjectById.get(h.subjectId) : undefined
-                return (
-                  <div key={h.id} className="card-row">
-                    <span className={styles.dot} data-subject={s?.color} />
-                    <span className={styles.grow}>{h.title}</span>
-                    {s && <span className="t-caption c-secondary">{s.name}</span>}
-                    <span className="t-mono-small c-tertiary">
-                      {h.dueDate === today ? 'today' : WEEKDAYS_SHORT[isoWeekday(h.dueDate) - 1]}
-                    </span>
-                  </div>
-                )
-              })}
+              {homework.map((h) => (
+                <HomeworkRow key={h.id} item={h} subject={h.subjectId ? subjectById.get(h.subjectId) : undefined} />
+              ))}
             </div>
           </section>
         </aside>

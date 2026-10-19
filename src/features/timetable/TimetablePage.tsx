@@ -159,6 +159,7 @@ export function TimetablePage() {
             </button>
           </aside>
 
+          <div className={styles.gridScroll}>
           <div
             className={`card ${styles.grid}`}
             style={{ '--days': dayCount, gridTemplateRows: `38px ${rows.map((r) => (r.kind === 'break' ? '26px' : '50px')).join(' ')}` } as CSSProperties}
@@ -224,6 +225,7 @@ export function TimetablePage() {
                 />
               )
             })}
+          </div>
           </div>
         </div>
       )}

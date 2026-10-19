@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { Link, NavLink, Navigate, Outlet, useNavigate } from 'react-router'
+import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router'
 import { ASSESSED_KINDS, COUNTDOWN_KINDS } from '../../shared/constants'
 import { isoWeekday } from '../../shared/dates'
 import { useSession } from '../lib/auth-client'
@@ -7,6 +7,7 @@ import { WEEKDAYS_SHORT, todayIso } from '../lib/format'
 import { useEvents, useSubjects } from '../lib/queries'
 import { Countdown } from './Countdown'
 import { Icon, type IconName } from './Icon'
+import { TabBar } from './TabBar'
 import styles from './AppShell.module.css'
 
 const NAV: { to: string; label: string; icon: IconName; key: string }[] = [
@@ -25,6 +26,7 @@ function isTyping(target: EventTarget | null) {
 export function AppShell() {
   const { data, isPending } = useSession()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const comingUp = useEvents({ kinds: COUNTDOWN_KINDS, from: todayIso(), limit: 3 })
   const subjects = useSubjects()
 
@@ -62,7 +64,7 @@ export function AppShell() {
             <NavLink
               key={item.to}
               to={item.to}
-              className={({ isActive }) => `${styles.navItem} ${isActive ? styles.active : ''}`}
+              className={({ isActive }) => `${styles.navItem} ${isActive || (item.to === '/week' && pathname === '/month') ? styles.active : ''}`}
             >
               <Icon name={item.icon} />
               <span className={styles.navLabel}>{item.label}</span>
@@ -102,6 +104,7 @@ export function AppShell() {
       <main className={styles.main}>
         <Outlet />
       </main>
+      <TabBar />
     </div>
   )
 }

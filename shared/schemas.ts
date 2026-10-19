@@ -73,6 +73,8 @@ export const eventInput = z
     title: z.string().trim().min(1, 'Title is required').max(100),
     subjectId: z.uuid().nullish(),
     date: isoDate,
+    /** Last day for multi-day events (inclusive). */
+    endDate: isoDate.nullish(),
     allDay: z.boolean().default(false),
     startTime: hhmm.nullish(),
     endTime: hhmm.nullish(),
@@ -83,5 +85,31 @@ export const eventInput = z
     tagIds: z.array(z.uuid()).max(20).default([]),
   })
   .refine((v) => v.allDay || !!v.startTime, { message: 'Start time is required (or make it all-day)', path: ['startTime'] })
-  .refine((v) => v.allDay || !v.startTime || !v.endTime || v.startTime < v.endTime, timesError)
+  .refine((v) => !v.endDate || v.endDate >= v.date, { message: 'The last day must be on or after the first day', path: ['endDate'] })
+  // Times only need to be in order on a single day; multi-day events may end earlier in the day than they start.
+  .refine((v) => v.allDay || !v.startTime || !v.endTime || (!!v.endDate && v.endDate > v.date) || v.startTime < v.endTime, timesError)
 export type EventInput = z.input<typeof eventInput>
+
+export const homeworkInput = z.object({
+  title: z.string().trim().min(1, 'Title is required').max(200),
+  subjectId: z.uuid().nullish(),
+  dueDate: isoDate,
+  notes: longText,
+})
+export const homeworkPatch = homeworkInput.partial().extend({ done: z.boolean().optional() })
+export type HomeworkInput = z.infer<typeof homeworkInput>
+export type HomeworkPatch = z.infer<typeof homeworkPatch>
+
+/** Cancel or change one occurrence of a weekly lesson. Empty "changed" fields keep the usual value. */
+export const lessonExceptionInput = z
+  .object({
+    kind: z.enum(['cancelled', 'changed']),
+    newStartTime: hhmm.nullish(),
+    newEndTime: hhmm.nullish(),
+    newRoom: optionalText,
+    note: optionalText,
+  })
+  .refine((v) => v.kind === 'cancelled' || v.newStartTime || v.newEndTime || v.newRoom, {
+    message: 'Change the time or the room (or cancel the lesson)',
+  })
+export type LessonExceptionInput = z.infer<typeof lessonExceptionInput>

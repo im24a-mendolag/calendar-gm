@@ -6,12 +6,15 @@ import type {
   SlotInput,
   SlotPatch,
   EventInput,
+  HomeworkInput,
+  HomeworkPatch,
+  LessonExceptionInput,
   SubjectInput,
   TagInput,
   TermInput,
   WakeTimesInput,
 } from '../../shared/schemas'
-import type { CalendarEvent, CalendarResponse, Holiday, LessonSlot, Period, Settings, Subject, Tag, Term } from '../../shared/types'
+import type { CalendarEvent, CalendarResponse, Holiday, Homework, LessonSlot, Period, Settings, Subject, Tag, Term } from '../../shared/types'
 import { api } from './api'
 
 export const keys = {
@@ -24,6 +27,7 @@ export const keys = {
   calendar: ['calendar'] as const,
   tags: ['tags'] as const,
   events: ['events'] as const,
+  homework: ['homework'] as const,
 }
 
 const json = (body: unknown) => ({ body: JSON.stringify(body) })
@@ -128,3 +132,41 @@ export const useSaveEvent = () =>
   )
 export const useDeleteEvent = () =>
   useApiMutation((id: string) => api<void>(`/events/${id}`, { method: 'DELETE' }), [keys.events, keys.tags])
+
+export const useHomework = (status: 'open' | 'done' | 'all') =>
+  useQuery({ queryKey: [...keys.homework, status], queryFn: () => api<Homework[]>(`/homework?status=${status}`) })
+export const useCreateHomework = () =>
+  useApiMutation((v: HomeworkInput) => api<Homework>('/homework', { method: 'POST', ...json(v) }), [keys.homework])
+export const useUpdateHomework = () =>
+  useApiMutation(
+    ({ id, ...v }: HomeworkPatch & { id: string }) => api<Homework>(`/homework/${id}`, { method: 'PATCH', ...json(v) }),
+    [keys.homework],
+  )
+export const useDeleteHomework = () =>
+  useApiMutation((id: string) => api<void>(`/homework/${id}`, { method: 'DELETE' }), [keys.homework])
+
+/** Cancel/change one dated lesson (step 8). Only the calendar depends on exceptions. */
+export const useSaveLessonException = () =>
+  useApiMutation(
+    ({ slotId, date, ...v }: LessonExceptionInput & { slotId: string; date: string }) =>
+      api<{ ok: true }>(`/lessons/${slotId}/${date}`, { method: 'PUT', ...json(v) }),
+    [],
+  )
+export const useRestoreLesson = () =>
+  useApiMutation(
+    ({ slotId, date }: { slotId: string; date: string }) => api<void>(`/lessons/${slotId}/${date}`, { method: 'DELETE' }),
+    [],
+  )
+
+export interface ImportSummary {
+  created: number
+  updated: number
+  skippedOwnExport: number
+  truncated: boolean
+}
+/** Upload an .ics file's text (step 9). */
+export const useImportIcs = () =>
+  useApiMutation(
+    (text: string) => api<ImportSummary>('/import', { method: 'POST', body: text, headers: { 'content-type': 'text/calendar' } }),
+    [keys.events],
+  )

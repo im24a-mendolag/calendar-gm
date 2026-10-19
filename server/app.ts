@@ -4,6 +4,9 @@ import { Prisma } from '../generated/prisma/client.js'
 import { auth, type AuthSession, type AuthUser } from './auth.js'
 import { calendar } from './routes/calendar.js'
 import { events } from './routes/events.js'
+import { homework } from './routes/homework.js'
+import { ics } from './routes/ics.js'
+import { lessons } from './routes/lessons.js'
 import { settings } from './routes/settings.js'
 import { subjects } from './routes/subjects.js'
 import { tags } from './routes/tags.js'
@@ -45,6 +48,9 @@ app.route('/settings', settings)
 app.route('/calendar', calendar)
 app.route('/tags', tags)
 app.route('/events', events)
+app.route('/homework', homework)
+app.route('/lessons', lessons)
+app.route('/', ics)
 
 app.onError((err, c) => {
   if (err instanceof HTTPException) return c.json({ error: err.message }, err.status)

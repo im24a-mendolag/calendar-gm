@@ -91,10 +91,10 @@
     grid-template-columns: 1fr;
   }
   .sidebar {
-    display: none; /* mobile tab bar comes in the polish step */
+    display: none; /* phones use the bottom TabBar */
   }
   .main {
-    padding: 56px var(--space-4) var(--space-4);
+    padding: 24px var(--space-4) calc(88px + env(safe-area-inset-bottom, 0px));
   }
 }
 

@@ -1,0 +1,123 @@
+.segLink {
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+}
+
+.head {
+  padding: 10px var(--space-3);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.head + .head {
+  border-left: 1px solid var(--color-border-subtle);
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  min-height: 112px;
+  padding: 6px;
+  border: 0;
+  border-top: 1px solid var(--color-border-subtle);
+  border-left: 1px solid var(--color-border-subtle);
+  background: var(--color-bg-surface);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.firstCol {
+  border-left: 0;
+}
+
+.cell:hover {
+  background: var(--color-bg-hover);
+}
+
+.outside {
+  background: var(--color-bg-canvas);
+}
+
+.outside .cellHead {
+  opacity: 0.5;
+}
+
+.holiday {
+  background: repeating-linear-gradient(-45deg, transparent 0 6px, var(--color-bg-sunken) 6px 7px), var(--color-bg-surface);
+}
+
+.cellHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px 2px;
+}
+
+.today {
+  display: inline-grid;
+  place-items: center;
+  min-width: 24px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  background: var(--color-accent-ink);
+  color: var(--color-accent-on-ink);
+}
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+.chipText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.solid {
+  background: var(--subject);
+  color: var(--color-text-on-solid);
+}
+
+.tint {
+  background: var(--subject-tint);
+  box-shadow: inset 2px 0 0 var(--subject);
+}
+
+.personal {
+  background: var(--color-bg-surface);
+  box-shadow: inset 2px 0 0 var(--color-accent-ink), inset 0 0 0 1px var(--color-border-subtle);
+}
+
+.hw {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: auto;
+  padding: 0 2px;
+}
+
+@media (max-width: 760px) {
+  .cell {
+    min-height: 72px;
+    padding: 4px;
+  }
+  .chip .t-mono-small {
+    display: none;
+  }
+}
