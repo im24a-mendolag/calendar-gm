@@ -1,0 +1,98 @@
+/* Colour comes from [data-subject] (tokens.css). Don't set --subject here: this module
+   loads after tokens.css and would override it at equal specificity.
+   Tag chip colours are set per variant via --tag-bg / --tag-fg (used by TagList). */
+.block {
+  position: relative;
+  --tag-bg: var(--color-bg-surface);
+  --tag-fg: var(--color-text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow: hidden;
+  padding: 6px var(--space-2);
+  border: 0;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  font: inherit;
+  color: var(--color-text-primary);
+}
+
+button.block {
+  cursor: pointer;
+}
+
+button.block:hover {
+  filter: brightness(0.97);
+}
+
+.top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.title,
+.meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+}
+
+.meta {
+  color: var(--color-text-secondary);
+}
+
+/* lesson / tagged: tint + left rule */
+.lesson,
+.tagged {
+  background: var(--subject-tint);
+  box-shadow: inset 3px 0 0 var(--subject);
+  padding-left: 11px;
+}
+
+/* assessed: solid subject colour */
+.assessed {
+  --tag-bg: var(--color-overlay-on-solid);
+  --tag-fg: var(--color-text-on-solid);
+  background: var(--subject);
+  color: var(--color-text-on-solid);
+}
+.assessed .meta {
+  color: var(--color-text-on-solid);
+  opacity: 0.85;
+}
+
+/* personal: neutral card with an ink rule */
+.personal {
+  --tag-bg: var(--color-bg-sunken);
+  background: var(--color-bg-surface);
+  box-shadow: inset 3px 0 0 var(--color-accent-ink), inset 0 0 0 1px var(--color-border-strong);
+  padding-left: 11px;
+}
+
+/* cancelled: dashed and struck through */
+.cancelled {
+  --tag-fg: var(--color-text-tertiary);
+  background: var(--color-bg-sunken);
+  outline: 1px dashed var(--color-border-strong);
+  outline-offset: -1px;
+  color: var(--color-text-tertiary);
+}
+.cancelled .title {
+  text-decoration: line-through;
+}
+.cancelled .meta {
+  color: var(--color-text-tertiary);
+}
+
+.selected {
+  outline: 2px solid var(--color-accent-ink);
+  outline-offset: 1px;
+}

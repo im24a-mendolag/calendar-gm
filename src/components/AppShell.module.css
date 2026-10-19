@@ -1,0 +1,142 @@
+.shell {
+  display: grid;
+  grid-template-columns: 232px 1fr;
+  height: 100%;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 20px var(--space-3) var(--space-4);
+  border-right: 1px solid var(--color-border-subtle);
+  background: var(--color-bg-canvas);
+}
+
+.brand {
+  padding: 0 var(--space-2) 20px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 6px var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.navItem:hover {
+  background: var(--color-bg-hover);
+}
+
+.active {
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.navLabel {
+  flex: 1;
+}
+
+.kbd {
+  color: var(--color-text-tertiary);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: var(--space-3) var(--space-2) 0;
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--color-bg-sunken);
+  color: var(--color-text-secondary);
+  letter-spacing: 0;
+}
+
+.userName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.main {
+  min-width: 0;
+  overflow: auto;
+  padding: 20px var(--space-8) var(--space-6);
+}
+
+@media (max-width: 760px) {
+  .shell {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: none; /* mobile tab bar comes in the polish step */
+  }
+  .main {
+    padding: 56px var(--space-4) var(--space-4);
+  }
+}
+
+.comingUp {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 28px;
+}
+
+.sectionLabel {
+  padding: 0 var(--space-2) var(--space-2);
+}
+
+.upcoming {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px var(--space-2);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  text-decoration: none;
+}
+
+.upcoming:hover {
+  background: var(--color-bg-hover);
+}
+
+.upcomingBar {
+  flex: none;
+  align-self: stretch;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--subject, var(--color-accent-ink));
+}
+
+.upcomingText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

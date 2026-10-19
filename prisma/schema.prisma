@@ -1,0 +1,318 @@
+// Connection URLs live in prisma.config.ts (Prisma 7). The app connects via the Neon driver adapter (db/client.ts).
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Better Auth core models (field names must match what Better Auth expects)
+// ---------------------------------------------------------------------------
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false) @map("email_verified")
+  image         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @default(now()) @updatedAt @map("updated_at")
+  sessions      Session[]
+  accounts      Account[]
+
+  settings          UserSettings?
+  subjects          Subject[]
+  terms             Term[]
+  holidays          Holiday[]
+  lessonSlots       LessonSlot[]
+  lessonExceptions  LessonException[]
+  events            Event[]
+  homework          Homework[]
+  wakeTimes         WakeTime[]
+  wakeTimeOverrides WakeTimeOverride[]
+  periods           Period[]
+  tags              Tag[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime @map("expires_at")
+  token     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  ipAddress String?  @map("ip_address")
+  userAgent String?  @map("user_agent")
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String    @map("account_id")
+  providerId            String    @map("provider_id")
+  userId                String    @map("user_id")
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?   @map("access_token")
+  refreshToken          String?   @map("refresh_token")
+  idToken               String?   @map("id_token")
+  accessTokenExpiresAt  DateTime? @map("access_token_expires_at")
+  refreshTokenExpiresAt DateTime? @map("refresh_token_expires_at")
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now()) @map("created_at")
+  updatedAt             DateTime  @updatedAt @map("updated_at")
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime @map("expires_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("verification")
+}
+
+// ---------------------------------------------------------------------------
+// App models. Every row belongs to a user; every query must filter by userId.
+// @db.Date = local calendar date, @db.Time = local wall-clock time, both in the
+// user's timezone (UserSettings.timezone). Convert with server/lib/datetime.ts.
+// ---------------------------------------------------------------------------
+
+/// Fixed list of event tags — keep in sync with shared/constants.ts EVENT_KINDS.
+enum EventKind {
+  exam
+  test
+  presentation
+  deadline
+  appointment
+  interview
+  work
+  sport
+  social
+  other
+
+  @@map("event_kind")
+}
+
+enum SubjectColor {
+  blue
+  orange
+  violet
+  teal
+  green
+  amber
+  pink
+  brown
+
+  @@map("subject_color")
+}
+
+enum ExceptionKind {
+  cancelled
+  changed
+
+  @@map("exception_kind")
+}
+
+enum EventSource {
+  manual
+  ics
+
+  @@map("event_source")
+}
+
+model UserSettings {
+  userId       String  @id @map("user_id")
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  timezone     String  @default("Europe/Zurich")
+  showWeekends Boolean @default(false) @map("show_weekends")
+
+  @@map("user_settings")
+}
+
+model Subject {
+  id          String       @id @default(uuid()) @db.Uuid
+  userId      String       @map("user_id")
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  color       SubjectColor
+  teacher     String?
+  defaultRoom String?      @map("default_room")
+  createdAt   DateTime     @default(now()) @map("created_at")
+
+  lessonSlots LessonSlot[]
+  events      Event[]
+  homework    Homework[]
+
+  @@index([userId])
+  @@map("subjects")
+}
+
+model Term {
+  id          String       @id @default(uuid()) @db.Uuid
+  userId      String       @map("user_id")
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String
+  startDate   DateTime     @map("start_date") @db.Date
+  endDate     DateTime     @map("end_date") @db.Date
+  lessonSlots LessonSlot[]
+
+  @@index([userId])
+  @@map("terms")
+}
+
+model Holiday {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  startDate DateTime @map("start_date") @db.Date
+  endDate   DateTime @map("end_date") @db.Date
+
+  @@index([userId])
+  @@map("holidays")
+}
+
+/// The school's bell schedule (period 1 = 07:30–08:15 …). Only used by the timetable editor;
+/// lesson slots store real times, so changing periods later doesn't move existing lessons.
+model Period {
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  number    Int      @db.SmallInt
+  startTime DateTime @map("start_time") @db.Time(0)
+  endTime   DateTime @map("end_time") @db.Time(0)
+
+  @@id([userId, number])
+  @@map("periods")
+}
+
+/// One weekly lesson in the timetable template. Expanded into dated occurrences on read.
+model LessonSlot {
+  id         String            @id @default(uuid()) @db.Uuid
+  userId     String            @map("user_id")
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectId  String            @map("subject_id") @db.Uuid
+  subject    Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  termId     String            @map("term_id") @db.Uuid
+  term       Term              @relation(fields: [termId], references: [id], onDelete: Cascade)
+  /// ISO weekday: 1 = Monday … 7 = Sunday
+  weekday    Int               @db.SmallInt
+  startTime  DateTime          @map("start_time") @db.Time(0)
+  endTime    DateTime          @map("end_time") @db.Time(0)
+  room       String?
+  exceptions LessonException[]
+
+  @@index([userId])
+  @@map("lesson_slots")
+}
+
+/// A one-off change to a single occurrence of a lesson slot.
+model LessonException {
+  id           String        @id @default(uuid()) @db.Uuid
+  userId       String        @map("user_id")
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slotId       String        @map("slot_id") @db.Uuid
+  slot         LessonSlot    @relation(fields: [slotId], references: [id], onDelete: Cascade)
+  date         DateTime      @db.Date
+  kind         ExceptionKind
+  newStartTime DateTime?     @map("new_start_time") @db.Time(0)
+  newEndTime   DateTime?     @map("new_end_time") @db.Time(0)
+  newRoom      String?       @map("new_room")
+  note         String?
+
+  @@unique([slotId, date])
+  @@map("lesson_exceptions")
+}
+
+/// Exams, tests, appointments, interviews… `kind` is a fixed list.
+model Event {
+  id           String      @id @default(uuid()) @db.Uuid
+  userId       String      @map("user_id")
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind         EventKind
+  title        String
+  subjectId    String?     @map("subject_id") @db.Uuid
+  subject      Subject?    @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  date         DateTime    @db.Date
+  startTime    DateTime?   @map("start_time") @db.Time(0)
+  endTime      DateTime?   @map("end_time") @db.Time(0)
+  allDay       Boolean     @default(false) @map("all_day")
+  location     String?
+  topics       String?
+  notes        String?
+  reminderDays Int?        @map("reminder_days") @db.SmallInt
+  source       EventSource @default(manual)
+  icsUid       String?     @map("ics_uid")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  /// The user's own tags, shown after the built-in `kind` tag.
+  tags         Tag[]
+
+  @@unique([userId, icsUid])
+  @@index([userId, date])
+  @@map("events")
+}
+
+/// A user-made tag ("Bring laptop", "Graded"…). Name only — colour always comes from the subject.
+model Tag {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @map("user_id")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  events    Event[]
+
+  @@unique([userId, name])
+  @@map("tags")
+}
+
+model Homework {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @map("user_id")
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subjectId String?   @map("subject_id") @db.Uuid
+  subject   Subject?  @relation(fields: [subjectId], references: [id], onDelete: SetNull)
+  title     String
+  notes     String?
+  dueDate   DateTime  @map("due_date") @db.Date
+  doneAt    DateTime? @map("done_at")
+  createdAt DateTime  @default(now()) @map("created_at")
+
+  @@index([userId, dueDate])
+  @@map("homework")
+}
+
+/// Default wake-up time per weekday. Display only — the app never rings. Null time = off.
+model WakeTime {
+  userId  String    @map("user_id")
+  user    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  weekday Int       @db.SmallInt
+  time    DateTime? @db.Time(0)
+
+  @@id([userId, weekday])
+  @@map("wake_times")
+}
+
+/// Wake-up time for one specific date, overriding the weekday default. Null time = no alarm that day.
+model WakeTimeOverride {
+  userId String    @map("user_id")
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  date   DateTime  @db.Date
+  time   DateTime? @db.Time(0)
+
+  @@id([userId, date])
+  @@map("wake_time_overrides")
+}

@@ -1,0 +1,93 @@
+.columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: var(--space-6);
+  max-width: 1160px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.section > p {
+  margin: 0 0 2px;
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.time {
+  width: 96px;
+}
+
+.off {
+  width: 96px;
+  padding: 0 10px;
+}
+
+.note {
+  background: var(--color-bg-canvas);
+}
+
+.rowButton {
+  width: 100%;
+  border: 0;
+  background: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rowButton:hover {
+  background: var(--color-bg-hover);
+}
+
+.kind {
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--color-bg-sunken);
+  color: var(--color-text-tertiary);
+}
+
+.kindTerm {
+  background: var(--color-bg-hover);
+  color: var(--color-text-secondary);
+}
+
+.tagRow {
+  align-items: flex-start;
+}
+
+.tagRowLabel {
+  flex: none;
+  width: 56px;
+  padding-top: 2px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  flex: none;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
+}
+
+.chipBuiltIn {
+  background: var(--color-bg-sunken);
+  color: var(--color-text-tertiary);
+}

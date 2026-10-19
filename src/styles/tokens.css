@@ -1,0 +1,99 @@
+/* Design tokens — mirrors the Figma variables in "Student Calendar" (Theme / Theme Dark / Subjects / Layout).
+   Theme: [data-theme="light|dark"] on <html> forces a theme; without it we follow the OS. */
+
+:root {
+  color-scheme: light;
+
+  --color-bg-canvas: #f6f5f1;
+  --color-bg-surface: #ffffff;
+  --color-bg-sunken: #efede8;
+  --color-bg-hover: #e9e7e1;
+  --color-border-subtle: #e5e2db;
+  --color-border-strong: #cbc7be;
+  --color-text-primary: #1b1a17;
+  --color-text-secondary: #66635c;
+  --color-text-tertiary: #9b978e;
+  --color-text-on-solid: #ffffff;
+  --color-accent-ink: #1b1a17;
+  --color-accent-on-ink: #ffffff;
+  --color-accent-now: #e5484d;
+  --color-accent-now-tint: rgb(229 72 77 / 0.12);
+  --color-overlay-on-solid: rgb(255 255 255 / 0.22);
+
+  --subject-blue: #3e63dd;
+  --subject-orange: #e8590c;
+  --subject-violet: #8e4ec6;
+  --subject-teal: #0d9488;
+  --subject-green: #2f9e44;
+  --subject-amber: #c98a00;
+  --subject-pink: #d6409f;
+  --subject-brown: #9c6b44;
+  --tint-alpha: 12%;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+
+  --shadow-popover: 0 8px 24px rgb(0 0 0 / 0.1), 0 1px 3px rgb(0 0 0 / 0.06);
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-bg-canvas: #111110;
+  --color-bg-surface: #191918;
+  --color-bg-sunken: #0b0b0a;
+  --color-bg-hover: #222220;
+  --color-border-subtle: #272725;
+  --color-border-strong: #3b3a36;
+  --color-text-primary: #eeede9;
+  --color-text-secondary: #a3a099;
+  --color-text-tertiary: #6c6963;
+  --color-accent-ink: #eeede9;
+  --color-accent-on-ink: #111110;
+  --color-accent-now: #ff6369;
+  --color-accent-now-tint: rgb(255 99 105 / 0.18);
+  --tint-alpha: 20%;
+  --shadow-popover: 0 8px 24px rgb(0 0 0 / 0.5), 0 0 0 1px var(--color-border-subtle);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --color-bg-canvas: #111110;
+    --color-bg-surface: #191918;
+    --color-bg-sunken: #0b0b0a;
+    --color-bg-hover: #222220;
+    --color-border-subtle: #272725;
+    --color-border-strong: #3b3a36;
+    --color-text-primary: #eeede9;
+    --color-text-secondary: #a3a099;
+    --color-text-tertiary: #6c6963;
+    --color-accent-ink: #eeede9;
+    --color-accent-on-ink: #111110;
+    --color-accent-now: #ff6369;
+    --color-accent-now-tint: rgb(255 99 105 / 0.18);
+    --tint-alpha: 20%;
+    --shadow-popover: 0 8px 24px rgb(0 0 0 / 0.5), 0 0 0 1px var(--color-border-subtle);
+  }
+}
+
+/* Subject colour hook: set data-subject="blue" etc. on an element to get --subject / --subject-tint. */
+[data-subject='blue'] { --subject: var(--subject-blue); }
+[data-subject='orange'] { --subject: var(--subject-orange); }
+[data-subject='violet'] { --subject: var(--subject-violet); }
+[data-subject='teal'] { --subject: var(--subject-teal); }
+[data-subject='green'] { --subject: var(--subject-green); }
+[data-subject='amber'] { --subject: var(--subject-amber); }
+[data-subject='pink'] { --subject: var(--subject-pink); }
+[data-subject='brown'] { --subject: var(--subject-brown); }
+[data-subject] {
+  --subject-tint: color-mix(in srgb, var(--subject) var(--tint-alpha), var(--color-bg-surface));
+}

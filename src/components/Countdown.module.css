@@ -1,0 +1,13 @@
+.chip {
+  flex: none;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-sunken);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+.soon {
+  background: var(--color-accent-now-tint);
+  color: var(--color-accent-now);
+}

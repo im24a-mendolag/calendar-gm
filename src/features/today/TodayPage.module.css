@@ -1,0 +1,246 @@
+.columns {
+  display: flex;
+  gap: var(--space-6);
+  align-items: flex-start;
+}
+
+.left {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.right {
+  flex: none;
+  width: 380px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.alarm {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text-secondary);
+}
+
+.alarm a {
+  text-decoration: none;
+}
+
+/* --- now card --- */
+.nowCard p,
+.nowCard h2 {
+  margin: 0;
+}
+
+.now {
+  display: flex;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.bar {
+  flex: none;
+  width: 4px;
+  border-radius: 2px;
+  background: var(--subject, var(--color-accent-ink));
+}
+
+.nowTop {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: 4px;
+}
+
+.nowTag {
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--color-accent-now-tint);
+  color: var(--color-accent-now);
+}
+
+.remaining {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.progress {
+  height: 3px;
+  background: var(--color-bg-sunken);
+}
+
+.progress span {
+  display: block;
+  height: 100%;
+  background: var(--subject, var(--color-accent-ink));
+}
+
+.next {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--subject, var(--color-text-tertiary));
+}
+
+/* --- schedule --- */
+.scheduleHead {
+  padding-top: 14px;
+}
+
+.row {
+  width: 100%;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+}
+
+button.row {
+  cursor: pointer;
+}
+
+button.row:hover {
+  background: var(--color-bg-hover);
+}
+
+.times {
+  flex: none;
+  width: 44px;
+  display: flex;
+  flex-direction: column;
+}
+
+.rowBar {
+  flex: none;
+  align-self: stretch;
+  width: 3px;
+  min-height: 28px;
+  border-radius: 2px;
+  background: var(--subject, var(--color-accent-ink));
+}
+
+.faded {
+  background: var(--color-border-strong);
+  opacity: 0.6;
+}
+
+.rowText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.rowTitle {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.isNow {
+  background: var(--color-bg-hover);
+}
+
+.isDone .rowBar {
+  opacity: 0.4;
+}
+
+.isDone .rowTitle {
+  color: var(--color-text-tertiary);
+}
+
+.isCancelled .rowTitle {
+  color: var(--color-text-tertiary);
+  text-decoration: line-through;
+}
+
+.isCancelled .rowBar {
+  opacity: 0.3;
+}
+
+.kind {
+  flex: none;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--color-bg-sunken);
+  color: var(--color-text-secondary);
+}
+
+/* --- right column --- */
+.sectionHead {
+  display: flex;
+  align-items: center;
+  padding-bottom: var(--space-2);
+}
+
+.sectionHead a {
+  text-decoration: none;
+}
+
+.upcoming {
+  width: 100%;
+  align-items: flex-start;
+  border: 0;
+  background: none;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  padding-block: 14px;
+}
+
+.upcoming:hover {
+  background: var(--color-bg-hover);
+}
+
+.upcomingTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.swatch {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 4px;
+  border-radius: 2px;
+  background: var(--subject);
+}
+
+.swatchInk {
+  background: var(--color-accent-ink);
+}
+
+@media (max-width: 1100px) {
+  .columns {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .right {
+    width: auto;
+  }
+}

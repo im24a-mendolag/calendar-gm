@@ -1,0 +1,45 @@
+.allDay {
+  flex: none;
+  align-items: flex-start;
+}
+
+.allDay :global(.toggle) {
+  margin-top: 7px;
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 34px;
+  line-height: 18px;
+}
+
+.tagPicker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tagOption {
+  padding: 3px 7px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: 3px;
+  background: var(--color-bg-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.tagOption[aria-pressed='true'] {
+  border-color: var(--color-accent-ink);
+  background: var(--color-accent-ink);
+  color: var(--color-accent-on-ink);
+}
+
+.tagNew {
+  border-style: dashed;
+}
+
+.tagInput {
+  width: 120px;
+  padding: 2px 6px;
+  font-size: 11px;
+}
