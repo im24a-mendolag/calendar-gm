@@ -2,11 +2,10 @@ import { useState } from 'react'
 import { toMinutes } from '../../../shared/dates'
 import type { LessonSlot, Subject } from '../../../shared/types'
 import { Popover, PopoverForm } from '../../components/Popover'
-import { TimeField } from '../../components/TimeField'
 import { WEEKDAYS_SHORT } from '../../lib/format'
 import { useCreateSlot, useDeleteSlot, useUpdateSlot } from '../../lib/queries'
 
-/** Add or edit one weekly lesson. Times are free — type any start and end. */
+/** Add or edit one weekly lesson. Times are free — any start and end. */
 export function LessonPopover({
   anchor,
   slot,
@@ -38,12 +37,15 @@ export function LessonPopover({
   const [room, setRoom] = useState(slot?.room ?? '')
   // Until you type a room yourself, it follows the subject's usual room.
   const [roomTouched, setRoomTouched] = useState(Boolean(slot))
+  // Empty = the subject's teacher (shown as the placeholder); fill it in when this lesson has someone else.
+  const [teacher, setTeacher] = useState(slot?.teacher ?? '')
+  const subjectTeacher = subjects.find((s) => s.id === subjectId)?.teacher ?? ''
   const error = create.error ?? update.error ?? remove.error
   const timesOk = toMinutes(endTime) > toMinutes(startTime)
 
   async function save() {
     if (!subjectId || !timesOk) return
-    const data = { subjectId, weekday, startTime, endTime, room: room || null }
+    const data = { subjectId, weekday, startTime, endTime, room: room || null, teacher: teacher.trim() || null }
     if (slot) await update.mutateAsync({ id: slot.id, ...data })
     else await create.mutateAsync({ ...data, termId })
     onClose()
@@ -92,26 +94,32 @@ export function LessonPopover({
         <div className="field-row">
           <label className="field">
             <span>Start</span>
-            <TimeField value={startTime} onChange={setStart} label="Start" />
+            <input className="input input-mono" type="time" value={startTime} onChange={(e) => setStart(e.target.value)} required />
           </label>
           <label className="field">
             <span>End</span>
-            <TimeField value={endTime} onChange={setEnd} label="End" />
+            <input className="input input-mono" type="time" value={endTime} min={startTime} onChange={(e) => setEnd(e.target.value)} required />
           </label>
         </div>
         {!timesOk && <p className="t-caption c-now">The end must be after the start.</p>}
-        <label className="field">
-          <span>Room</span>
-          <input
-            className="input input-mono"
-            value={room}
-            maxLength={40}
-            onChange={(e) => {
-              setRoom(e.target.value)
-              setRoomTouched(true)
-            }}
-          />
-        </label>
+        <div className="field-row">
+          <label className="field">
+            <span>Room</span>
+            <input
+              className="input input-mono"
+              value={room}
+              maxLength={40}
+              onChange={(e) => {
+                setRoom(e.target.value)
+                setRoomTouched(true)
+              }}
+            />
+          </label>
+          <label className="field">
+            <span>Teacher</span>
+            <input className="input" value={teacher} maxLength={60} placeholder={subjectTeacher} onChange={(e) => setTeacher(e.target.value)} />
+          </label>
+        </div>
         <p className="t-caption c-secondary">Every week · {termName}</p>
         {error && <p className="t-caption c-now">{error.message}</p>}
       </PopoverForm>

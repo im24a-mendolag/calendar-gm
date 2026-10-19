@@ -5,10 +5,10 @@ import type { Holiday, LessonException, LessonSlot, Term } from './types.js'
 
 const term: Term = { id: 't1', name: 'Autumn term', startDate: '2026-08-17', endDate: '2026-12-23' }
 const mondayMaths: LessonSlot = {
-  id: 's1', subjectId: 'maths', termId: 't1', weekday: 1, startTime: '09:20', endTime: '10:55', room: 'A112',
+  id: 's1', subjectId: 'maths', termId: 't1', weekday: 1, startTime: '09:20', endTime: '10:55', room: 'A112', teacher: null,
 }
 const wednesdayGerman: LessonSlot = {
-  id: 's2', subjectId: 'german', termId: 't1', weekday: 3, startTime: '10:10', endTime: '10:55', room: 'A207',
+  id: 's2', subjectId: 'german', termId: 't1', weekday: 3, startTime: '10:10', endTime: '10:55', room: 'A207', teacher: null,
 }
 const base = { slots: [mondayMaths, wednesdayGerman], terms: [term], holidays: [] as Holiday[], exceptions: [] as LessonException[] }
 

@@ -44,7 +44,11 @@ A calendar web app for school and personal life. You enter your school timetable
   - The year is worked out from the week column ("31.08. - 06.09.26").
   - Subject codes (M, D, WR, FRw, …) are matched to your subjects or created as new ones, and your choices are remembered.
   - Pasting the list again updates the exams instead of duplicating them.
-- **Sidebar "Coming up":** the next three exams, tests, presentations, appointments or interviews.
+- **Sidebar "Coming up":** the next 5 things in the coming 14 days.
+  - Each row has a letter badge: **E** exam, **T** test, **P** presentation, **A** appointment, **I** interview, **H** homework.
+  - School badges use the subject colour (solid for exams, tinted for homework); personal ones are neutral.
+  - Every row shows the title, then the day (and time, if it has one).
+  - Overdue homework is listed first, marked red.
 - **Homework**
   - Quick-add bar: press **N** to jump to it, Enter to add.
   - The due date defaults to the subject's next lesson.

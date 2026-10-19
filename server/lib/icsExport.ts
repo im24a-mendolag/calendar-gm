@@ -99,7 +99,7 @@ export function buildIcs(input: ExportInput): string {
       ...[...skip].sort().map((d) => dt('EXDATE', d, slot.startTime)),
       `SUMMARY:${escapeText(subject.name)}`,
       ...(slot.room ? [`LOCATION:${escapeText(slot.room)}`] : []),
-      ...(subject.teacher ? [`DESCRIPTION:${escapeText(subject.teacher)}`] : []),
+      ...((slot.teacher ?? subject.teacher) ? [`DESCRIPTION:${escapeText((slot.teacher ?? subject.teacher)!)}`] : []),
       'CATEGORIES:Lesson',
       'END:VEVENT',
     )

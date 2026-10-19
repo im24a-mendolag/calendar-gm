@@ -25,7 +25,7 @@ export const termInput = z.object({ name: named, startDate: isoDate, endDate: is
 export const holidayInput = z.object({ name: named, startDate: isoDate, endDate: isoDate }).refine(datesInOrder, datesError)
 
 export const slotInput = z
-  .object({ subjectId: z.uuid(), termId: z.uuid(), weekday, startTime: hhmm, endTime: hhmm, room: optionalText })
+  .object({ subjectId: z.uuid(), termId: z.uuid(), weekday, startTime: hhmm, endTime: hhmm, room: optionalText, teacher: optionalText })
   .refine(timesInOrder, timesError)
 export const slotPatch = z
   .object({
@@ -34,6 +34,7 @@ export const slotPatch = z
     startTime: hhmm,
     endTime: hhmm,
     room: optionalText,
+    teacher: optionalText,
   })
   .partial()
 

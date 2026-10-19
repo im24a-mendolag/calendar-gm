@@ -8,6 +8,8 @@ export interface LessonOccurrence {
   startTime: string
   endTime: string
   room: string | null
+  /** The lesson's own teacher; null = the subject's */
+  teacher: string | null
   status: 'scheduled' | 'cancelled' | 'changed'
   note: string | null
 }
@@ -49,6 +51,7 @@ export function expandLessons(input: {
         startTime: slot.startTime,
         endTime: slot.endTime,
         room: slot.room,
+        teacher: slot.teacher,
         status: 'scheduled',
         note: null,
       }

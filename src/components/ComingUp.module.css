@@ -1,0 +1,52 @@
+.comingUp {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 28px;
+}
+
+.label {
+  padding: 0 var(--space-2) var(--space-2);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px var(--space-2);
+  border-radius: var(--radius-sm);
+  color: inherit;
+  text-decoration: none;
+}
+
+.row:hover {
+  background: var(--color-bg-hover);
+}
+
+/* solid subject colour (exams etc.); ink when there's no subject (personal events) */
+.bar {
+  flex: none;
+  align-self: stretch;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--subject, var(--color-accent-ink));
+}
+
+/* homework: dashed, like something still to do */
+.barDashed {
+  background: repeating-linear-gradient(to bottom, var(--subject, var(--color-accent-ink)) 0 4px, transparent 4px 7px);
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* each line ellipsises on its own */
+.text > span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

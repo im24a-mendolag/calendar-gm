@@ -32,4 +32,5 @@ export const slotDto = (s: db.LessonSlot): LessonSlot => ({
   startTime: fromDbTime(s.startTime),
   endTime: fromDbTime(s.endTime),
   room: s.room,
+  teacher: s.teacher,
 })

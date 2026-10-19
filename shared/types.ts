@@ -32,6 +32,8 @@ export interface LessonSlot {
   startTime: string
   endTime: string
   room: string | null
+  /** null = the subject's teacher */
+  teacher: string | null
 }
 
 export interface LessonException {

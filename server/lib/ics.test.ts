@@ -19,8 +19,8 @@ const input = {
   terms: [term],
   holidays: [holiday],
   slots: [
-    { id: 's1', subjectId: 'm', termId: 't', weekday: 1, startTime: '09:20', endTime: '10:55', room: 'A112' },
-    { id: 's2', subjectId: 'g', termId: 't', weekday: 3, startTime: '10:10', endTime: '10:55', room: 'A207' },
+    { id: 's1', subjectId: 'm', termId: 't', weekday: 1, startTime: '09:20', endTime: '10:55', room: 'A112', teacher: null },
+    { id: 's2', subjectId: 'g', termId: 't', weekday: 3, startTime: '10:10', endTime: '10:55', room: 'A207', teacher: null },
   ],
   exceptions: [
     { id: 'x1', slotId: 's1', date: '2026-10-26', kind: 'changed' as const, newStartTime: null, newEndTime: null, newRoom: 'Aula', note: 'Room change' },

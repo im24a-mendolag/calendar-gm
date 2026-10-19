@@ -210,6 +210,8 @@ model LessonSlot {
   startTime  DateTime          @map("start_time") @db.Time(0)
   endTime    DateTime          @map("end_time") @db.Time(0)
   room       String?
+  /// Who teaches this lesson; null = the subject's teacher
+  teacher    String?
   exceptions LessonException[]
 
   @@index([userId])

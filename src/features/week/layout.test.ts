@@ -8,7 +8,7 @@ const item = (key: string, start: number, end: number): GridItem => ({
 })
 
 const lesson = (subjectId: string, startTime: string, endTime: string): LessonOccurrence => ({
-  slotId: subjectId, subjectId, date: '2026-10-21', startTime, endTime, room: null, status: 'scheduled', note: null,
+  slotId: subjectId, subjectId, date: '2026-10-21', startTime, endTime, room: null, teacher: null, status: 'scheduled', note: null,
 })
 
 const event = (over: Partial<CalendarEvent>): CalendarEvent => ({

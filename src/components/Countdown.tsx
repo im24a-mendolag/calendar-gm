@@ -17,11 +17,12 @@ export function isSoon(date: string, reminderDays: number | null, today = todayI
   return d >= 0 && d <= (reminderDays ?? 3)
 }
 
-/** The Figma "Countdown" chip. */
-export function Countdown({ date, reminderDays = null }: { date: string; reminderDays?: number | null }) {
+/** The Figma "Countdown" chip. `overdue`: dates in the past read "overdue" (homework). */
+export function Countdown({ date, reminderDays = null, overdue = false }: { date: string; reminderDays?: number | null; overdue?: boolean }) {
+  const late = overdue && date < todayIso()
   return (
-    <span className={`t-mono-small ${styles.chip} ${isSoon(date, reminderDays) ? styles.soon : ''}`}>
-      {countdownLabel(date)}
+    <span className={`t-mono-small ${styles.chip} ${late || isSoon(date, reminderDays) ? styles.soon : ''}`}>
+      {late ? 'overdue' : countdownLabel(date)}
     </span>
   )
 }

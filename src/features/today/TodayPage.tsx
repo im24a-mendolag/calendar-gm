@@ -37,7 +37,8 @@ const fmt = (m: number) => `${String(Math.floor(m / 60)).padStart(2, '0')}:${Str
 export function TodayPage() {
   const now = useNow()
   const today = now.date
-  const calendar = useCalendar(today, addDays(today, 13))
+  // Through day 14 inclusive, so "in 14 days" shows up under "next 14 days" (same as the sidebar).
+  const calendar = useCalendar(today, addDays(today, 14))
   const subjects = useSubjects()
   const [editing, setEditing] = useState<{ event: CalendarEvent; anchor: HTMLElement } | null>(null)
   const subjectById = useMemo(() => new Map((subjects.data ?? []).map((s) => [s.id, s])), [subjects.data])
@@ -57,7 +58,7 @@ export function TodayPage() {
         startTime: l.startTime,
         endTime: l.endTime,
         title: s?.name ?? 'Lesson',
-        detail: [l.room, s?.teacher].filter(Boolean).join(' · ') || null,
+        detail: [l.room, l.teacher ?? s?.teacher].filter(Boolean).join(' · ') || null,
         color: s?.color ?? null,
         cancelled: l.status === 'cancelled',
         tag: l.status === 'changed' ? 'Changed' : l.status === 'cancelled' ? 'Cancelled' : null,
